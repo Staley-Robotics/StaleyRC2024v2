@@ -30,6 +30,8 @@ class SwerveDrive(Subsystem):
 
     # Initialization
     def __init__(self) -> None:
+        self.setName( "SwerveDrive" )
+
         self.m_modules = [
             SwerveModule( 7, 8, 18, 97.471 ),
             SwerveModule( 1, 2, 12, 5.361 ),
