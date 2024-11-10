@@ -19,7 +19,7 @@ class NoteFactory(Subsystem):
     m_launcher:Launcher = None
 
     # Initialization
-    def __init__(self, sysId:int) -> None:
+    def __init__(self) -> None:
         self.setName( "NoteFactory" )
         
         self.intake = Intake()
@@ -32,7 +32,7 @@ class NoteFactory(Subsystem):
     # Periodic Loop
     def periodic(self) -> None:
         # Logging: Write Current Subsystem State
-        self.m_logging.putNumber( "SubsystemData", 0.0 )
+        #self.m_logging.putNumber( "SubsystemData", 0.0 )
 
         # Run Subsystem: Set New State To Subsystem
         if RobotState.isDisabled():
@@ -41,8 +41,8 @@ class NoteFactory(Subsystem):
             self.run()
         
         # Logging: Write Post Operation Information
-        self.m_logging.putNumber( "Setpoint", self.getSetpoint() )
-        self.m_logging.putNumber( "Measured", self.m_system )
+        #self.m_logging.putNumber( "Setpoint", self.getSetpoint() )
+        #self.m_logging.putNumber( "Measured", self.m_system )
 
     # Run the Subsystem
     def run(self) -> None:
