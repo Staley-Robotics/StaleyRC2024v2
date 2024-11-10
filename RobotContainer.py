@@ -7,6 +7,7 @@ from commands.SampleCommand import SampleCommand
 from commands.DriveByStick import DriveByStick
 from subsystems.SampleSubsystem import SampleSubsystem
 from subsystems.SwerveDrive import SwerveDrive
+from subsystems.NoteFactory import NoteFactory
 
 class RobotContainer:
     # Variable Declaration
@@ -19,6 +20,11 @@ class RobotContainer:
 
         # Declare Subsystems
         self.m_driveTrain = SwerveDrive()
+        self.m_noteFactory = NoteFactory()
+
+        # Put Subsystems on SmartDashboard
+        SmartDashboard.putData( "SwerveDrive", self.m_driveTrain )
+        SmartDashboard.putData( "NoteFactory", self.m_noteFactory )
 
         # Commands
         self.driveCommand = DriveByStick(self.m_driveTrain, self.m_driver1.getLeftX, self.m_driver1.getLeftY, self.m_driver1.getRightY )

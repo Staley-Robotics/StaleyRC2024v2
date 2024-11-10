@@ -1,0 +1,18 @@
+class Launcher:
+    def __init__(self):
+        pass
+
+    def run(self):
+        pass
+
+    def source(self):
+        pass
+
+    def amp(self):
+        pass
+
+    def speaker(self):
+        pass
+
+    def stop(self):
+        pass
