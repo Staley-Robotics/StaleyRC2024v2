@@ -3,8 +3,9 @@ from commands2.button import CommandXboxController
 import commands2.cmd as cmd
 from wpilib import SendableChooser, SmartDashboard
 
-from commands.SampleCommand import SampleCommand
-from subsystems.SampleSubsystem import SampleSubsystem
+from commands.IntakePickup import IntakePickup
+from commands.IntakeHandoff import IntakeHandoff
+from subsystems.Intake import Intake
 
 class RobotContainer:
     # Variable Declaration
@@ -16,11 +17,13 @@ class RobotContainer:
         self.m_driver1 = CommandXboxController( 0 )
 
         # Declare Subsystems
-        self.m_subsys = SampleSubsystem( 0 )
+        self.m_intake = Intake()
 
         # Commands
-        self.leftX = SampleCommand(self.m_subsys, self.m_driver1.getLeftX )
-        self.rightX = SampleCommand(self.m_subsys, self.m_driver1.getRightX )
+        #self.leftX = SampleCommand(self.m_subsys, self.m_driver1.getLeftX )
+        #self.rightX = SampleCommand(self.m_subsys, self.m_driver1.getRightX )
+        self.intakeHandoff = IntakeHandoff( self.m_intake )
+        self.intakePickup = IntakePickup( self.m_intake )
 
         # Autonomous Chooser
         self.m_autoChooser = SendableChooser()
@@ -28,10 +31,11 @@ class RobotContainer:
         SmartDashboard.putData( "Autonomous Mode", self.m_autoChooser )
 
         # Default Commands
-        self.m_subsys.setDefaultCommand( self.leftX )
+        #self.m_subsys.setDefaultCommand( self.leftX )
 
         # Driver Controller Button Binding
-        self.m_driver1.a().whileTrue( self.rightX )
+        self.m_driver1.a().toggleOnTrue( self.intakePickup )
+        self.m_driver1.b().toggleOnTrue( self.intakeHandoff )
 
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:
