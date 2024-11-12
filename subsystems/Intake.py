@@ -1,6 +1,6 @@
-import statistics
+import statistics, typing
 
-from commands2 import Subsystem
+from commands2 import Subsystem, cmd, Command
 
 from wpilib import SmartDashboard, Mechanism2d, Color8Bit, RobotController, DigitalInput
 from wpimath.units import rotationsToDegrees
@@ -51,6 +51,7 @@ class Intake(Subsystem):
         # self.l_root = self.l_mech.getRoot( "Base", 3, 3 )
         # self.l_topMotor = self.l_root.appendLigament( "TopMotor", 2, rotationsToDegrees( self.m_topMotor.get_position().value ), 2, Color8Bit(0,255,0) )
 
+        # Logging
         self.m_logging = NetworkTableInstance.getDefault().getTable("/Logging/Intake")
         SmartDashboard.putData( "Intake", self )
 

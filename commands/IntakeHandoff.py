@@ -28,7 +28,7 @@ class IntakeHandoff(Command):
 
     # Is Finished
     def isFinished(self) -> bool:
-        return not self.m_intake.isSensorTripped()
+        return not self.m_intake.hasNote()
 
     # Run When Disabled
     def runsWhenDisabled(self) -> bool:

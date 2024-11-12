@@ -28,7 +28,7 @@ class IntakePickup(Command):
 
     # Is Finished
     def isFinished(self) -> bool:
-        return self.m_intake.isSensorTripped()
+        return self.m_intake.hasNote()
 
     # Run When Disabled
     def runsWhenDisabled(self) -> bool:
