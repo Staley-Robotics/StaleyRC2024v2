@@ -15,25 +15,26 @@ from rev import SparkMax, SparkRelativeEncoder, SparkMaxSim, SparkRelativeEncode
 from phoenix6.hardware import CANcoder
 from phoenix6.sim import CANcoderSimState
 
+class SwerveModuleConstants:
+    class Drive:
+        kWheelRadius:float = 0.0508
+        kGearRatio:float = 1 / 6.75
+        kP:float = 0 #0.1
+        kI:float = 0
+        kD:float = 0
+        kS:float = 0 #0.1
+        kV:float = 2.8235 #0.13
+    class Turn:
+        kGearRatio:float = 1 / (150/7)
+        kP:float = 10.0 # 25.0
+        kI:float = 0
+        kD:float = 0
+        kMaxAngularVelocity:float = math.pi
+        kMaxAngularAcceleration:float = math.tau
+        kS:float = 0
+        kV:float = 0
+
 class SwerveModule:
-    # Static Constants
-    drive_kWheelRadius:float = 0.0508
-    drive_kGearRatio:float = 1 / 6.75
-    drive_kP:float = 0 #0.1
-    drive_kI:float = 0
-    drive_kD:float = 0
-    drive_kS:float = 0 #0.1
-    drive_kV:float = 2.8235 #0.13
-
-    turn_kGearRatio:float = 1 / (150/7)
-    turn_kP:float = 10.0 # 25.0
-    turn_kI:float = 0
-    turn_kD:float = 0
-    turn_kMaxAngularVelocity:float = math.pi
-    turn_kMaxAngularAcceleration:float = math.tau
-    turn_kS:float = 0
-    turn_kV:float = 0
-
     # Variable Declaration
     m_driveMotor:SparkMax = None
     m_driveEncoder:SparkRelativeEncoder = None
@@ -51,20 +52,20 @@ class SwerveModule:
         # Drive Motor
         self.m_driveMotor = SparkMax( driveId, SparkMax.MotorType.kBrushless )
         self.m_driveEncoder = self.m_driveMotor.getEncoder()
-        self.c_drivePid = PIDController( self.drive_kP, self. drive_kI, self.drive_kD )
+        self.c_drivePid = PIDController( SwerveModuleConstants.Drive.kP, SwerveModuleConstants.Drive.kI, SwerveModuleConstants.Drive.kD )
         self.c_drivePid.setTolerance( 0.01 )
-        self.c_driveFF = SimpleMotorFeedforwardMeters( self.drive_kS, self.drive_kV )
+        self.c_driveFF = SimpleMotorFeedforwardMeters( SwerveModuleConstants.Drive.kS, SwerveModuleConstants.Drive.kV )
 
         # Turn Motor
         self.m_turnMotor = SparkMax( turnId, SparkMax.MotorType.kBrushless )
         self.m_turnEncoder = CANcoder( encoderId, "canivore1" )
         if not RobotBase.isSimulation():
             self.m_turnEncoder.set_position( self.m_turnEncoder.get_absolute_position().value_as_double - encoderOffset )
-        self.c_turnPid = PIDController( self.turn_kP, self.turn_kI, self.turn_kD )
-        #self.c_turnPid = ProfiledPIDControllerRadians( self.turn_kP, self.turn_kI, self.turn_kD, TrapezoidProfileRadians.Constraints( self.turn_kMaxAngularVelocity, self.turn_kMaxAngularAcceleration ) )
+        self.c_turnPid = PIDController( SwerveModuleConstants.Turn.kP, SwerveModuleConstants.Turn.kI, SwerveModuleConstants.Turn.kD )
+        #self.c_turnPid = ProfiledPIDControllerRadians( SwerveModuleConstants.Turn.kP, SwerveModuleConstants.Turn.kI, SwerveModuleConstants.Turn.kD, TrapezoidProfileRadians.Constraints( SwerveModuleConstants.Turn.kMaxAngularVelocity, SwerveModuleConstants.Turn.kMaxAngularAcceleration ) )
         self.c_turnPid.enableContinuousInput( -math.pi, math.pi )
         self.c_turnPid.setTolerance( 0.150 )
-        self.c_turnFF = SimpleMotorFeedforwardRadians( self.turn_kS, self.turn_kV )
+        self.c_turnFF = SimpleMotorFeedforwardRadians( SwerveModuleConstants.Turn.kS, SwerveModuleConstants.Turn.kV )
 
         # Simulation Objects
         self.m_driveMotorSim = SparkMaxSim( self.m_driveMotor, DCMotor.NEO(1) )
@@ -113,7 +114,7 @@ class SwerveModule:
         self.m_turnMotorEncoderSim.setPosition( self.m_turnMotorEncoderSim.getPosition() + turnRp20ms )
 
         # CANcoder Velocity
-        canRpm = turnRpm * self.turn_kGearRatio 
+        canRpm = turnRpm * SwerveModuleConstants.Turn.kGearRatio 
         canRps = canRpm / 60
         self.m_turnEncoderSim.set_velocity( canRps )
         
@@ -143,15 +144,15 @@ class SwerveModule:
         )
 
     def __getDriveDistance(self, rotations:float) -> float:
-        wheelRotations = rotations * self.drive_kGearRatio
+        wheelRotations = rotations * SwerveModuleConstants.Drive.kGearRatio
         wheelRadians = rotationsToRadians( wheelRotations )
-        meters = wheelRadians * self.drive_kWheelRadius
+        meters = wheelRadians * SwerveModuleConstants.Drive.kWheelRadius
         return meters
 
     def __getDriveVelocity(self, rotationsPerMinute:float) -> float:
-        wheelRotationsPerMin = rotationsPerMinute * self.drive_kGearRatio
+        wheelRotationsPerMin = rotationsPerMinute * SwerveModuleConstants.Drive.kGearRatio
         wheelRadiansPerSec = rotationsPerMinuteToRadiansPerSecond( wheelRotationsPerMin )
-        metersPerSec = wheelRadiansPerSec * self.drive_kWheelRadius
+        metersPerSec = wheelRadiansPerSec * SwerveModuleConstants.Drive.kWheelRadius
         return metersPerSec
 
     def __getTurnEncoderRotation(self) -> Rotation2d:

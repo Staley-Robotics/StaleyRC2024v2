@@ -11,11 +11,11 @@ from phoenix6.hardware import Pigeon2
 
 from subsystems.SwerveModule import SwerveModule
 
-class SwerveDrive(Subsystem):
-    # Static Constants
-    kMaxSpeed = 4.4 # Meters Per Second
-    kRotationSpeed = math.pi # Rotations Per Second
+class SwerveDriveConstants:
+    kMaxSpeed = 4.4
+    kRotationSpeed = math.pi
 
+class SwerveDrive(Subsystem):
     # Variable Declaration
     m_modules:typing.Tuple[ SwerveModule, SwerveModule, SwerveModule, SwerveModule ] = None
     m_gyro:Pigeon2 = None
@@ -113,9 +113,9 @@ class SwerveDrive(Subsystem):
         y = min( max( y, -1.0 ), 1.0 )
         omega = min( max( omega, -1.0 ), 1.0 )
 
-        xSpeed = x * self.s_MaxSpeedPercent * self.kMaxSpeed
-        ySpeed = y * self.s_MaxSpeedPercent * self.kMaxSpeed
-        omegaSpeed = omega * self.s_MaxRotationPercent * self.kRotationSpeed
+        xSpeed = x * self.s_MaxSpeedPercent * SwerveDriveConstants.kMaxSpeed
+        ySpeed = y * self.s_MaxSpeedPercent * SwerveDriveConstants.kMaxSpeed
+        omegaSpeed = omega * self.s_MaxRotationPercent * SwerveDriveConstants.kRotationSpeed
 
         cSpeed = (
             ChassisSpeeds.fromFieldRelativeSpeeds( xSpeed, ySpeed, omegaSpeed, self.m_gyro.getRotation2d() )
@@ -132,7 +132,7 @@ class SwerveDrive(Subsystem):
 
     # Run By SwerveModuleStates
     def runModuleStates(self, swerveStates:typing.Tuple[ SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState ]) -> None:
-        newStates = SwerveDrive4Kinematics.desaturateWheelSpeeds( swerveStates, self.kMaxSpeed )
+        newStates = SwerveDrive4Kinematics.desaturateWheelSpeeds( swerveStates, SwerveDriveConstants.kMaxSpeed )
         self.m_modules[0].setState(newStates[0])
         self.m_modules[1].setState(newStates[1])
         self.m_modules[2].setState(newStates[2])
@@ -155,16 +155,16 @@ class SwerveDrive(Subsystem):
         ]
     
     def getMaxSpeed(self) -> float:
-        return self.kMaxSpeed
+        return SwerveDriveConstants.kMaxSpeed
     
     def getMaxRotation(self) -> float:
-        return self.kRotationSpeed
+        return SwerveDriveConstants.kRotationSpeed
 
     def getLimitedMaxSpeed(self) -> float:
-        return self.kMaxSpeed * self.s_MaxSpeedPercent
+        return SwerveDriveConstants.kMaxSpeed * self.s_MaxSpeedPercent
     
     def getLimitedMaxRotation(self) -> float:
-        return self.kRotationSpeed * self.s_MaxRotationPercent
+        return SwerveDriveConstants.kRotationSpeed * self.s_MaxRotationPercent
 
     def getFieldRelative(self) -> bool:
         return self.s_FieldRelative
