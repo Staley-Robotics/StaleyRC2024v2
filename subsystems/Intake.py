@@ -11,7 +11,7 @@ from phoenix6.controls import DutyCycleOut
 from phoenix6.configs import TalonFXConfiguration, MotorOutputConfigs
 from phoenix6.signals.spn_enums import InvertedValue, NeutralModeValue
 
-class IntakeConstants:
+class IntakeOptions:
     EJECT:float = -1.0
     STOP:float = 0.0
     HANDOFF:float = 0.5

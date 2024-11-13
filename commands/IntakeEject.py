@@ -1,6 +1,6 @@
 from commands2 import Command
 from wpilib import Timer
-from subsystems.Intake import Intake, IntakeConstants
+from subsystems.Intake import Intake, IntakeOptions
 
 class IntakeEject(Command):
     # Variable Declaration
@@ -28,11 +28,11 @@ class IntakeEject(Command):
 
     # Periodic
     def execute(self) -> None:
-        self.m_intake.setSetpoint( IntakeConstants.EJECT )
+        self.m_intake.setSetpoint( IntakeOptions.EJECT )
 
     # On End
     def end(self, interrupted:bool) -> None:
-        self.m_intake.setSetpoint( IntakeConstants.STOP )
+        self.m_intake.setSetpoint( IntakeOptions.STOP )
 
     # Is Finished
     def isFinished(self) -> bool:

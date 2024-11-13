@@ -1,5 +1,5 @@
 from commands2 import Command
-from subsystems.Intake import Intake, IntakeConstants
+from subsystems.Intake import Intake, IntakeOptions
 
 class IntakePickup(Command):
     # Variable Declaration
@@ -20,11 +20,11 @@ class IntakePickup(Command):
 
     # Periodic
     def execute(self) -> None:
-        self.m_intake.setSetpoint( IntakeConstants.PICKUP )
+        self.m_intake.setSetpoint( IntakeOptions.PICKUP )
 
     # On End
     def end(self, interrupted:bool) -> None:
-        self.m_intake.setSetpoint( IntakeConstants.STOP )
+        self.m_intake.setSetpoint( IntakeOptions.STOP )
 
     # Is Finished
     def isFinished(self) -> bool:

@@ -1,5 +1,5 @@
 from commands2 import Command
-from subsystems.Intake import Intake, IntakeConstants
+from subsystems.Intake import Intake, IntakeOptions
 
 class IntakeHandoff(Command):
     # Variable Declaration
@@ -20,11 +20,11 @@ class IntakeHandoff(Command):
 
     # Periodic
     def execute(self) -> None:
-        self.m_intake.setSetpoint( IntakeConstants.HANDOFF )
+        self.m_intake.setSetpoint( IntakeOptions.HANDOFF )
 
     # On End
     def end(self, interrupted:bool) -> None:
-        self.m_intake.setSetpoint( IntakeConstants.STOP )
+        self.m_intake.setSetpoint( IntakeOptions.STOP )
 
     # Is Finished
     def isFinished(self) -> bool:
