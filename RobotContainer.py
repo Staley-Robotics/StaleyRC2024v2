@@ -5,7 +5,7 @@ from wpilib import SendableChooser, SmartDashboard
 
 #from commands.SampleCommand import SampleCommand
 #from subsystems.SampleSubsystem import SampleSubsystem
-from subsystems.Pivot import Pivot, PivotConstants
+from subsystems.Pivot import Pivot, PivotPositions
 from commands.PivotToPosition import PivotToPosition
 
 class RobotContainer:
@@ -24,13 +24,13 @@ class RobotContainer:
         # Commands
         #self.leftX = SampleCommand(self.m_subsys, self.m_driver1.getLeftX )
         #self.rightX = SampleCommand(self.m_subsys, self.m_driver1.getRightX )
-        self.pivotHigh    = PivotToPosition( self.pivot, PivotConstants.MAX )
-        self.pivotAmp     = PivotToPosition( self.pivot, PivotConstants.AMP )
-        self.pivotSpeaker = PivotToPosition( self.pivot, PivotConstants.SPEAKER )
-        self.pivotHandoff = PivotToPosition( self.pivot, PivotConstants.HANDOFF )
-        self.pivotToss    = PivotToPosition( self.pivot, PivotConstants.TOSS )
-        self.pivotFlat    = PivotToPosition( self.pivot, PivotConstants.FLAT )
-        self.pivotLow     = PivotToPosition( self.pivot, PivotConstants.MIN )
+        self.pivotHigh    = PivotToPosition( self.pivot, PivotPositions.MAX )
+        self.pivotAmp     = PivotToPosition( self.pivot, PivotPositions.AMP )
+        self.pivotSpeaker = PivotToPosition( self.pivot, PivotPositions.SPEAKER )
+        self.pivotHandoff = PivotToPosition( self.pivot, PivotPositions.HANDOFF )
+        self.pivotToss    = PivotToPosition( self.pivot, PivotPositions.TOSS )
+        self.pivotFlat    = PivotToPosition( self.pivot, PivotPositions.FLAT )
+        self.pivotLow     = PivotToPosition( self.pivot, PivotPositions.MIN )
 
         # Autonomous Chooser
         self.m_autoChooser = SendableChooser()

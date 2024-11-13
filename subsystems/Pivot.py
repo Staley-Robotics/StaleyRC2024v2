@@ -13,7 +13,7 @@ from phoenix6.controls import VoltageOut, DutyCycleOut
 from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
 from phoenix6.signals.spn_enums import InvertedValue, NeutralModeValue, AbsoluteSensorRangeValue, SensorDirectionValue
 
-class PivotConstants:
+class PivotPositions:
     MAX = 55.041
     AMP = 52.0
     SPEAKER = 50.0
@@ -22,7 +22,7 @@ class PivotConstants:
     FLAT = 0.0
     MIN = -52.031
 
-class Pivot(PIDSubsystem):
+class PivotConstants:
     # Constants
     kP:float = 3.0
     kI:float = 0.0
@@ -32,6 +32,7 @@ class Pivot(PIDSubsystem):
     kTolerance:float = 0.01 # 0.0028 # Rotations 1.0 # In Degrees
     kGearRatio = 1 / 200
 
+class Pivot(PIDSubsystem):
     # Motors
     m_motor:TalonFX = None
     m_encoder:CANcoder = None
@@ -53,10 +54,10 @@ class Pivot(PIDSubsystem):
         self.s_motorSim = SingleJointedArmSim(
             LinearSystemId.singleJointedArmSystem( self.s_motor, 0.0005, 1.0 ),
             self.s_motor,
-            1 / self.kGearRatio,
+            1 / PivotConstants.kGearRatio,
             0.2,
-            -math.pi * 1 / self.kGearRatio,
-            math.pi * 1 / self.kGearRatio,
+            -math.pi * 1 / PivotConstants.kGearRatio,
+            math.pi * 1 / PivotConstants.kGearRatio,
             False,
             0
         )
@@ -70,12 +71,12 @@ class Pivot(PIDSubsystem):
         self.m_encoder.configurator.apply( m_encoderCfg )
 
         super().__init__(
-            PIDController( self.kP, self.kI, self.kD ),
+            PIDController( PivotConstants.kP, PivotConstants.kI, PivotConstants.kD ),
             self.m_encoder.get_position().value
         )
 
         # Controllers
-        self._controller.setTolerance( self.kTolerance )
+        self._controller.setTolerance( PivotConstants.kTolerance )
         self._controller.enableContinuousInput( -1.0, 1.0 )
         self.enable()
 
@@ -122,12 +123,12 @@ class Pivot(PIDSubsystem):
         self.m_motor.sim_state.add_rotor_position( velocity * 0.02 )
 
         # CANcoder
-        self.m_encoder.sim_state.set_velocity( velocity * self.kGearRatio )
-        self.m_encoder.sim_state.add_position( velocity * self.kGearRatio * 0.02 )
+        self.m_encoder.sim_state.set_velocity( velocity * PivotConstants.kGearRatio )
+        self.m_encoder.sim_state.add_position( velocity * PivotConstants.kGearRatio * 0.02 )
 
     def setSetpoint(self, setpoint:degrees):
         # Limits the specific range (Protects mechanism)
-        setpoint = min( max( setpoint, PivotConstants.MIN ), PivotConstants.MAX )
+        setpoint = min( max( setpoint, PivotPositions.MIN ), PivotPositions.MAX )
         setpoint = degreesToRotations( setpoint )
         return super().setSetpoint(setpoint)
 
