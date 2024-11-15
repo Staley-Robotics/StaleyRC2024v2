@@ -33,10 +33,10 @@ class SwerveDrive(Subsystem):
         self.setName( "SwerveDrive" )
 
         self.m_modules = [
-            SwerveModule( 7, 8, 18, 97.471 ),
-            SwerveModule( 1, 2, 12, 5.361 ),
-            SwerveModule( 5, 6, 16, 298.828 ),
-            SwerveModule( 3, 4, 14, 60.557 )
+            SwerveModule( 0, 7, 8, 18, 97.471 ),
+            SwerveModule( 1, 1, 2, 12, 5.361 ),
+            SwerveModule( 2, 5, 6, 16, 298.828 ),
+            SwerveModule( 3, 3, 4, 14, 60.557 )
         ]
 
         self.m_gyro = Pigeon2( 9, "canivore1" )
@@ -57,6 +57,7 @@ class SwerveDrive(Subsystem):
 
         self.stop()
 
+        SmartDashboard.putData( "SwerveDrive", self )
         self.m_field = Field2d()
         SmartDashboard.putData("Field", self.m_field)
 
@@ -65,7 +66,7 @@ class SwerveDrive(Subsystem):
     # Periodic Loop
     def periodic(self) -> None:
         # Logging: Write Current Subsystem State
-        self.m_logging.putNumber( "SubsystemData", 0.0 )
+        #self.m_logging.putNumber( "SubsystemData", 0.0 )
 
         # Run Subsystem: Set New State To Subsystem
         if RobotState.isDisabled():
