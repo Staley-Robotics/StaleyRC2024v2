@@ -4,3 +4,5 @@ robotpy-installer==2025.0.0b1
 ### RobotPy
 robotpy==2025.0.0b1
 robotpy[commands2]==2025.0.0b1
+
+robotpy-rev==2025.0.0b1
