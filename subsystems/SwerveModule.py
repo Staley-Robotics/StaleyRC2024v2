@@ -65,6 +65,7 @@ class SwerveModule:
 
         # Turn Motor
         self.__turnMotor = SparkMax( turnId, SparkMax.MotorType.kBrushless )
+        self.__turnMotorEncoder = self.__turnMotor.getEncoder()
         self.__turnEncoder = CANcoder( encoderId, "canivore1" )
         if not RobotBase.isSimulation():
             self.__turnEncoder.set_position( self.__turnEncoder.get_absolute_position().value_as_double - encoderOffset )
@@ -83,10 +84,10 @@ class SwerveModule:
         
         # Turn Motor Simulation Setup
         self.__turnMotorSim = SparkMaxSim( self.__turnMotor, DCMotor.NEO(1) )
-        self.__driveMotorSim.getAbsoluteEncoderSim().setPositionConversionFactor(1)
-        self.__driveMotorSim.getAbsoluteEncoderSim().setVelocityConversionFactor(1)
-        self.__driveMotorSim.getRelativeEncoderSim().setPositionConversionFactor(1)
-        self.__driveMotorSim.getRelativeEncoderSim().setVelocityConversionFactor(1)
+        self.__turnMotorSim.getAbsoluteEncoderSim().setPositionConversionFactor(1)
+        self.__turnMotorSim.getAbsoluteEncoderSim().setVelocityConversionFactor(1)
+        self.__turnMotorSim.getRelativeEncoderSim().setPositionConversionFactor(1)
+        self.__turnMotorSim.getRelativeEncoderSim().setVelocityConversionFactor(1)
         
         # CANcoder Simulation Setup
         self.__turnEncoderSim = self.__turnEncoder.sim_state
@@ -114,10 +115,18 @@ class SwerveModule:
         self.__turnMotor.setVoltage( turnOut )
 
         # Logging
-        self.__logger.putNumber( "MotorVelocity_mps-Actual", driveVelocity )
-        self.__logger.putNumber( "MotorVelocity_mps-Desired", self.__setpoint.speed )
-        self.__logger.putNumber( "MotorDistance_m", self.__getDriveDistance( self.__driveEncoder.getPosition() ) )
-        self.__logger.putNumber( "MotorVoltage", self.__driveMotor.getAppliedOutput() ) 
+        self.__logger.putNumber( "DriveInput", self.__driveMotor.get() )
+        self.__logger.putNumber( "DriveOutput", self.__driveMotor.getAppliedOutput() )
+        self.__logger.putNumber( "DrivePosition_r", self.__driveEncoder.getPosition() )
+        self.__logger.putNumber( "DriveVelocity_rpm", self.__driveEncoder.getVelocity() )
+
+        self.__logger.putNumber( "TurnInput", self.__turnMotor.get() )
+        self.__logger.putNumber( "TurnOutput", self.__turnMotor.getAppliedOutput() )
+        self.__logger.putNumber( "TurnPosition_r", self.__turnMotorEncoder.getPosition() )
+        self.__logger.putNumber( "TurnVelocity_rpm", self.__turnMotorEncoder.getVelocity() )
+
+        self.__logger.putNumber( "EncoderPosition_r", self.__turnEncoder.get_position().value )
+        self.__logger.putNumber( "EncoderVelocity_rps", self.__turnEncoder.get_velocity().value )
 
     def runSim(self) -> None:
         # Drive Motor Position and Velocity
