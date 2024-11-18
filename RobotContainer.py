@@ -2,9 +2,10 @@ from commands2 import Command
 from commands2.button import CommandXboxController
 import commands2.cmd as cmd
 from wpilib import SendableChooser, SmartDashboard
+from wpilib.shuffleboard import Shuffleboard
 
-from commands.SampleCommand import SampleCommand
-from subsystems.SampleSubsystem import SampleSubsystem
+from commands.LauncherStart import LauncherStart
+from subsystems.Launcher import Launcher, LauncherOptions
 
 class RobotContainer:
     # Variable Declaration
@@ -16,11 +17,13 @@ class RobotContainer:
         self.m_driver1 = CommandXboxController( 0 )
 
         # Declare Subsystems
-        self.m_subsys = SampleSubsystem( 0 )
+        self.__launcher = Launcher()
 
         # Commands
-        self.leftX = SampleCommand(self.m_subsys, self.m_driver1.getLeftX )
-        self.rightX = SampleCommand(self.m_subsys, self.m_driver1.getRightX )
+        self.launchLong = LauncherStart( self.__launcher, LauncherOptions.LONG )
+        self.launchToss = LauncherStart( self.__launcher, LauncherOptions.TOSS )
+        self.launchAmp = LauncherStart( self.__launcher, LauncherOptions.AMP )
+        self.launchStop = LauncherStart( self.__launcher, LauncherOptions.STOP )
 
         # Autonomous Chooser
         self.m_autoChooser = SendableChooser()
@@ -28,10 +31,15 @@ class RobotContainer:
         SmartDashboard.putData( "Autonomous Mode", self.m_autoChooser )
 
         # Default Commands
-        self.m_subsys.setDefaultCommand( self.leftX )
+        #self.m_subsys.setDefaultCommand( self.leftX )
 
         # Driver Controller Button Binding
-        self.m_driver1.a().whileTrue( self.rightX )
+        self.m_driver1.a().toggleOnTrue( self.launchLong )
+        self.m_driver1.b().toggleOnTrue( self.launchToss )
+        self.m_driver1.x().toggleOnTrue( self.launchAmp )
+
+        # Dashboarding
+        self.addDashboards( "Launcher", [ self.launchLong, self.launchToss, self.launchAmp, self.launchStop ])
 
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:
@@ -40,3 +48,8 @@ class RobotContainer:
             return chooserValue
         else:
             return cmd.none()
+        
+    def addDashboards( self, tabName:str, myCommands:list[Command] ):
+        tab = Shuffleboard.getTab( tabName )
+        for i in range(len(myCommands)):
+            tab.add( myCommands[i].getName(), myCommands[i] )
