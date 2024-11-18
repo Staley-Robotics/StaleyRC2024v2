@@ -4,9 +4,10 @@ from subsystems import Feeder, FeederModes
 
 class FeederBalance(Command):
     def __init__(self, feeder:Feeder):
+        self.__feeder:Feeder = feeder
+
         self.setName( "FeederBalance" )
         self.addRequirements( feeder )
-        self.__feeder:Feeder = feeder
 
     def initialize(self):
         if self.__feeder.topHasNote():

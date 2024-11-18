@@ -1,8 +1,6 @@
-import typing
-
 from commands2 import Command
 
-from subsystems.Feeder import Feeder, FeederModes
+from subsystems import Feeder, FeederModes
 
 class FeederHandoff(Command):
     # Variable Declaration
@@ -14,6 +12,8 @@ class FeederHandoff(Command):
                 ) -> None:
         # Command Attributes
         self.__feeder:Feeder = mySubsystem
+        self.__pullBack:bool = False
+        
         self.setName( "FeederHandoff" )
         self.addRequirements( mySubsystem )
 
@@ -22,11 +22,15 @@ class FeederHandoff(Command):
         if self.__feeder.hasSecuredNote():
             self.cancel()
         else:
+            self.__pullBack = False
             self.__feeder.setSetpoint( FeederModes.HANDOFF )
 
     # Periodic
     def execute(self) -> None:
-        pass
+        if not self.__pullBack:
+            if self.__feeder.topHasNote() and not self.__feeder.bottomHasNote():
+                self.__pullBack = True
+                self.__feeder.setSetpoint( FeederModes.BALANCEOUT )
 
     # On End
     def end(self, interrupted:bool) -> None:
@@ -34,7 +38,7 @@ class FeederHandoff(Command):
 
     # Is Finished
     def isFinished(self) -> bool:
-        return self.__feeder.topHasNote() and not self.__feeder.bottomHasNote()
+        return self.__pullBack and self.__feeder.hasSecuredNote()
 
     # Run When Disabled
     def runsWhenDisabled(self) -> bool:

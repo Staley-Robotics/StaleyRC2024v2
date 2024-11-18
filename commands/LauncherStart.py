@@ -1,13 +1,8 @@
-import typing
+from commands2 import Command
 
-from commands2 import Command, Subsystem
-from subsystems.Launcher import Launcher, LauncherOptions
+from subsystems import Launcher
 
 class LauncherStart(Command):
-    # Variable Declaration
-    __launcher:Launcher = None
-    __speed:float = 0.0
-    
     # Initialization
     def __init__( self,
                   mySubsystem:Launcher,
@@ -15,8 +10,9 @@ class LauncherStart(Command):
                 ) -> None:
         # Command Attributes
         self.__launcher:Launcher = mySubsystem
-        self.__speed = mySpeed
-        self.setName( f"Launcher_{self.__speed}" )
+        self.__speed:float = mySpeed
+
+        self.setName( f"LauncherStart({self.__speed})" )
         self.addRequirements( mySubsystem )
 
     # On Start

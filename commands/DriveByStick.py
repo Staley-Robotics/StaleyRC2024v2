@@ -1,20 +1,14 @@
 import typing
 
 from wpimath import applyDeadband
+from commands2 import Command
 
-from commands2 import Command, Subsystem
-from subsystems.SwerveDrive import SwerveDrive
+from subsystems import SwerveDrive
 
 class DriveByStick(Command):
     # Deadband
     kDeadband = 0.04
 
-    # Variable Declaration
-    m_subsystem:SwerveDrive = None
-    m_getX:typing.Callable[[],float] = lambda: 0.0
-    m_getY:typing.Callable[[],float] = lambda: 0.0
-    m_getRotation:typing.Callable[[],float] = lambda: 0.0
-    
     # Initialization
     def __init__( self,
                   mySubsystem:SwerveDrive,
@@ -23,10 +17,11 @@ class DriveByStick(Command):
                   myRotation: typing.Callable[[], float] = lambda: 0.0
                 ) -> None:
         # Command Attributes
-        self.m_subsystem:SwerveDrive = mySubsystem
-        self.m_getX = myX
-        self.m_getY = myY
-        self.m_getRotation = myRotation
+        self.__subsystem:SwerveDrive = mySubsystem
+        self.__getX = myX
+        self.__getY = myY
+        self.__getRotation = myRotation
+        
         self.setName( "DriveByStick" )
         self.addRequirements( mySubsystem )
 
@@ -36,10 +31,10 @@ class DriveByStick(Command):
 
     # Periodic
     def execute(self) -> None:
-        self.m_subsystem.runPercentInputs(
-            applyDeadband( -self.m_getX(), self.kDeadband ),
-            applyDeadband( -self.m_getY(), self.kDeadband ),
-            applyDeadband( -self.m_getRotation(), self.kDeadband )
+        self.__subsystem.runPercentInputs(
+            applyDeadband( -self.__getX(), self.kDeadband ),
+            applyDeadband( -self.__getY(), self.kDeadband ),
+            applyDeadband( -self.__getRotation(), self.kDeadband )
         )
 
     # On End

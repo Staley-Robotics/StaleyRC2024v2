@@ -1,22 +1,19 @@
 from commands2 import Command
-from wpilib import SmartDashboard
 
-from subsystems.Pivot import Pivot
+from subsystems import Pivot
 
 class PivotToPosition(Command):
     myPivot:Pivot = None
 
     def __init__(self, pivotSubsystem:Pivot, pivotPosition:float):
-        self.myPivot = pivotSubsystem
-        self.myPosition = pivotPosition
+        self.__pivot:Pivot = pivotSubsystem
+        self.__position:float = pivotPosition
 
-        self.setName( f"PivotToPosition({self.myPosition})" )
+        self.setName( f"PivotToPosition({self.__position})" )
         self.addRequirements( self.myPivot )
 
-        super().__init__()
-
     def initialize(self):
-        return self.myPivot.setSetpoint( self.myPosition )
+        return self.__pivot.setSetpoint( self.__position )
     
     # def execute(self):
     #     print( f"{self.myPivot.atSetpoint()} {self.myPivot.getSetpoint()} {self.myPivot.getMeasurement()} {self.myPivot.m_motor.get()}")
@@ -26,7 +23,7 @@ class PivotToPosition(Command):
     #    return super().end(interrupted)
     
     def isFinished(self):
-        return self.myPivot.atSetpoint()
+        return self.__pivot.atSetpoint()
     
     def runsWhenDisabled(self):
         return False

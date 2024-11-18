@@ -1,25 +1,20 @@
-import typing
-
 from commands2 import Command
 from wpilib import Timer
 
-from subsystems.Feeder import Feeder, FeederModes
+from subsystems import Feeder, FeederModes
 from util.SharedConstants import SharedConstants
 
 class FeederEject(Command):
-    # Variable Declaration
-    __feeder:Feeder = None
-    __timer:Timer = None
-    
     # Initialization
     def __init__( self,
                   mySubsystem:Feeder
                 ) -> None:
         # Command Attributes
         self.__feeder:Feeder = mySubsystem
+        self.__timer:Timer = Timer()
+
         self.setName( "FeederEject" )
         self.addRequirements( mySubsystem )
-        self.__timer:Timer = Timer()
 
     # On Start
     def initialize(self) -> None:

@@ -2,7 +2,7 @@ import typing
 
 from commands2 import Command
 
-from subsystems.Feeder import Feeder, FeederModes
+from subsystems import Feeder, FeederModes
 
 class FeederLaunch(Command):
     # Variable Declaration
@@ -14,12 +14,16 @@ class FeederLaunch(Command):
                 ) -> None:
         # Command Attributes
         self.__feeder:Feeder = mySubsystem
+        
         self.setName( "FeederLaunch" )
         self.addRequirements( mySubsystem )
 
     # On Start
     def initialize(self) -> None:
-        self.__feeder.setSetpoint( FeederModes.LAUNCH )
+        if not self.__feeder.hasSecuredNote():
+            self.cancel()
+        else:
+            self.__feeder.setSetpoint( FeederModes.LAUNCH )
 
     # Periodic
     def execute(self) -> None:

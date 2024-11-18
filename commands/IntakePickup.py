@@ -1,34 +1,32 @@
 from commands2 import Command
-from subsystems.Intake import Intake, IntakeOptions
+from subsystems import Intake, IntakeOptions
 
 class IntakePickup(Command):
-    # Variable Declaration
-    m_intake:Intake = None
-    
     # Initialization
     def __init__( self,
                   mySubsystem:Intake
                 ) -> None:
         # Command Attributes
-        self.m_intake:Intake = mySubsystem
+        self.__intake:Intake = mySubsystem
+        
         self.setName( "IntakePickup" )
         self.addRequirements( mySubsystem )
         
     # On Start
     def initialize(self) -> None:
-        self.m_intake.setBrake( True )
+        self.__intake.setBrake( True )
 
     # Periodic
     def execute(self) -> None:
-        self.m_intake.setSetpoint( IntakeOptions.PICKUP )
+        self.__intake.setSetpoint( IntakeOptions.PICKUP )
 
     # On End
     def end(self, interrupted:bool) -> None:
-        self.m_intake.setSetpoint( IntakeOptions.STOP )
+        self.__intake.setSetpoint( IntakeOptions.STOP )
 
     # Is Finished
     def isFinished(self) -> bool:
-        return self.m_intake.hasNote()
+        return self.__intake.hasNote()
 
     # Run When Disabled
     def runsWhenDisabled(self) -> bool:
