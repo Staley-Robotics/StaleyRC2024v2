@@ -1,0 +1,195 @@
+import typing
+import math
+
+from commands2 import Subsystem
+from wpilib import RobotState, SmartDashboard, Field2d
+from wpimath.geometry import Rotation2d, Translation2d, Pose2d, Pose3d
+from wpimath.kinematics import SwerveDrive4Kinematics, SwerveModulePosition, SwerveModuleState, SwerveDrive4Odometry, ChassisSpeeds
+from ntcore import NetworkTable, NetworkTableInstance, _now
+from ntcore.util import ntproperty
+
+from phoenix6.hardware import Pigeon2
+
+from subsystems.SwerveModule import SwerveModule
+
+class SwerveDriveConstants:
+    kMaxSpeed = 4.4
+    kRotationSpeed = math.pi
+
+class SwerveDrive(Subsystem):
+    # Variable Declaration
+    __modules:typing.Tuple[ SwerveModule, SwerveModule, SwerveModule, SwerveModule ] = None
+    __gyro:Pigeon2 = None
+    __kinematics:SwerveDrive4Kinematics = None
+    __odometry:SwerveDrive4Odometry = None
+    __logging:NetworkTable = None
+
+    # Settings
+    __DriveFieldRelative = ntproperty( "/Settings/Driver1/FieldRelative", True )
+    __DriveMaxSpeedPercent = ntproperty( "/Settings/Driver1/MaxSpeedPercent", 1.0 )
+    __DriveMaxRotationPercent = ntproperty( "/Settings/Driver1/MaxRotationPercent", 1.0 )
+
+    __setpoint:ChassisSpeeds = None
+
+    # Initialization
+    def __init__(self) -> None:
+        self.setName( "SwerveDrive" )
+
+        self.__modules = [
+            SwerveModule( 0, 7, 8, 18, 97.471 ),
+            SwerveModule( 1, 1, 2, 12, 5.361 ),
+            SwerveModule( 2, 5, 6, 16, 298.828 ),
+            SwerveModule( 3, 3, 4, 14, 60.557 )
+        ]
+
+        self.__gyro = Pigeon2( 9, "canivore1" )
+
+        self.__kinematics = SwerveDrive4Kinematics(
+            Translation2d( 0.2667, 0.2667 ),
+            Translation2d( 0.2667, -0.2667 ),
+            Translation2d( -0.2667, 0.2667 ),
+            Translation2d( -0.2667, -0.2667 )
+        )
+
+        self.__odometry = SwerveDrive4Odometry(
+            self.__kinematics,
+            self.__gyro.getRotation2d(),
+            self.__getModulePositions(),
+            Pose2d( Translation2d(0,0), Rotation2d(0) )
+        )
+
+        self.stop()
+
+        SmartDashboard.putData( "SwerveDrive", self )
+        self.__field = Field2d()
+        SmartDashboard.putData("Field", self.__field)
+
+        self.__logging = NetworkTableInstance.getDefault().getTable("/Logging/SwerveDrive")
+        self.__outGyro = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/Gyro",Rotation2d).publish()
+        self.__outOdometry = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/Odometry",Pose2d).publish()
+        self.__outChassisSpeedsActual = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/ChassisSpeeds/Actual", ChassisSpeeds).publish()
+        self.__outChassisSpeedsTarget = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/ChassisSpeeds/Target", ChassisSpeeds).publish()
+        self.__outSwerveModuleStateActual = NetworkTableInstance.getDefault().getStructArrayTopic("/RealOutputs/SwerveDrive/SwerveModuleStates/Actual", SwerveModuleState).publish()
+        self.__outSwerveModuleStateTarget = NetworkTableInstance.getDefault().getStructArrayTopic("/RealOutputs/SwerveDrive/SwerveModuleStates/Target", SwerveModuleState).publish()
+
+    # Periodic Loop
+    def periodic(self) -> None:
+        # Run Subsystem: Set New State To Subsystem
+        if RobotState.isDisabled():
+            self.stop()
+        
+        # Run SwerveModules
+        self.__modules[0].run()
+        self.__modules[1].run()
+        self.__modules[2].run()
+        self.__modules[3].run()
+        
+        # Update Odometry
+        pose =  self.__odometry.update(
+            self.__gyro.getRotation2d(),
+            self.__getModulePositions()
+        )
+        
+        # Logging
+        self.__field.setRobotPose( pose )
+        self.__logging.putValue( "Gyro/yaw_d", self.__gyro.get_yaw().value )
+        self.__logging.putValue( "Gyro/pitch_d", self.__gyro.get_pitch().value  )
+        self.__logging.putValue( "Gyro/roll_d", self.__gyro.get_roll().value  )
+        
+        ntTime = _now()
+        self.__outGyro.set( self.__gyro.getRotation2d(), ntTime )
+        self.__outOdometry.set( pose, ntTime )
+        self.__outSwerveModuleStateActual.set( self.__getModuleStates(), ntTime )
+        self.__outSwerveModuleStateTarget.set( self.__setpointStates, ntTime )
+        self.__outChassisSpeedsActual.set( self.getChassisSpeeds(), ntTime )
+        self.__outChassisSpeedsTarget.set( self.__setpoint, ntTime )
+
+    # Simulation Periodic Loop
+    def simulationPeriodic(self) -> None:
+        # Run SwerveModules
+        self.__modules[0].runSim()
+        self.__modules[1].runSim()
+        self.__modules[2].runSim()
+        self.__modules[3].runSim()
+
+        # Update Gyro
+        moduleStates = self.__getModuleStates()
+        actualSpeed = self.__kinematics.toChassisSpeeds( moduleStates )
+        yawPer20ms = actualSpeed.omega_dps * 0.02
+        self.__gyro.sim_state.add_yaw( yawPer20ms )
+
+    # Stop the Subsystem
+    def stop(self) -> None:
+        self.runChassisSpeeds( ChassisSpeeds( 0.0, 0.0, 0.0 ) )
+ 
+    # Run By Percentage
+    def runPercentInputs(self, x:float, y:float, omega:float) -> None:
+        # Range Tolerances
+        x = min( max( x, -1.0 ), 1.0 )
+        y = min( max( y, -1.0 ), 1.0 )
+        omega = min( max( omega, -1.0 ), 1.0 )
+
+        xSpeed = x * self.__DriveMaxSpeedPercent * SwerveDriveConstants.kMaxSpeed
+        ySpeed = y * self.__DriveMaxSpeedPercent * SwerveDriveConstants.kMaxSpeed
+        omegaSpeed = omega * self.__DriveMaxRotationPercent * SwerveDriveConstants.kRotationSpeed
+
+        cSpeed = (
+            ChassisSpeeds.fromFieldRelativeSpeeds( xSpeed, ySpeed, omegaSpeed, self.__gyro.getRotation2d() )
+            if self.__DriveFieldRelative
+            else ChassisSpeeds( xSpeed, ySpeed, omegaSpeed )
+        )
+        self.runChassisSpeeds( cSpeed )
+
+    # Run By Chassis Speeds
+    def runChassisSpeeds(self, chassisSpeeds:ChassisSpeeds) -> None:
+        self.__setpoint = ChassisSpeeds.discretize( chassisSpeeds, 0.02 )
+        self.__setpointStates = self.__kinematics.toSwerveModuleStates( self.__setpoint )
+        self.runModuleStates( self.__setpointStates )
+
+    # Run By SwerveModuleStates
+    def runModuleStates(self, swerveStates:typing.Tuple[ SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState ]) -> None:
+        newStates = SwerveDrive4Kinematics.desaturateWheelSpeeds( swerveStates, SwerveDriveConstants.kMaxSpeed )
+        self.__modules[0].setState(newStates[0])
+        self.__modules[1].setState(newStates[1])
+        self.__modules[2].setState(newStates[2])
+        self.__modules[3].setState(newStates[3])
+
+    def __getModulePositions(self) -> typing.Tuple[ SwerveModulePosition, SwerveModulePosition, SwerveModulePosition, SwerveModulePosition]:
+        return [
+            self.__modules[0].getPosition(),
+            self.__modules[1].getPosition(),
+            self.__modules[2].getPosition(),
+            self.__modules[3].getPosition()
+        ]
+    
+    def __getModuleStates(self) -> typing.Tuple[ SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState]:
+        return [
+            self.__modules[0].getState(),
+            self.__modules[1].getState(),
+            self.__modules[2].getState(),
+            self.__modules[3].getState()
+        ]
+
+    def getChassisSpeeds(self) -> ChassisSpeeds:
+        return self.__kinematics.toChassisSpeeds( self.__getModuleStates() )
+
+    def getMaxSpeed(self) -> float:
+        return SwerveDriveConstants.kMaxSpeed
+    
+    def getMaxRotation(self) -> float:
+        return SwerveDriveConstants.kRotationSpeed
+
+    def getDriverMaxSpeed(self) -> float:
+        return SwerveDriveConstants.kMaxSpeed * self.__DriveMaxSpeedPercent
+    
+    def getDriverMaxRotation(self) -> float:
+        return SwerveDriveConstants.kRotationSpeed * self.__DriveMaxRotationPercent
+
+    def getFieldRelative(self) -> bool:
+        return self.__DriveFieldRelative
+    
+    def setFieldRelative(self, isFieldRelative:bool) -> None:
+        self.__DriveFieldRelative = isFieldRelative
+
+    def toggleFieldRelative(self) -> None:
+        self.__DriveFieldRelative = not self.__DriveFieldRelative

@@ -4,7 +4,9 @@ import commands2.cmd as cmd
 from wpilib import SendableChooser, SmartDashboard
 
 from commands.SampleCommand import SampleCommand
+from commands.DriveByStick import DriveByStick
 from subsystems.SampleSubsystem import SampleSubsystem
+from subsystems.SwerveDrive import SwerveDrive
 
 class RobotContainer:
     # Variable Declaration
@@ -16,11 +18,10 @@ class RobotContainer:
         self.m_driver1 = CommandXboxController( 0 )
 
         # Declare Subsystems
-        self.m_subsys = SampleSubsystem( 0 )
+        self.m_driveTrain = SwerveDrive()
 
         # Commands
-        self.leftX = SampleCommand(self.m_subsys, self.m_driver1.getLeftX )
-        self.rightX = SampleCommand(self.m_subsys, self.m_driver1.getRightX )
+        self.driveCommand = DriveByStick(self.m_driveTrain, self.m_driver1.getLeftX, self.m_driver1.getLeftY, self.m_driver1.getRightY )
 
         # Autonomous Chooser
         self.m_autoChooser = SendableChooser()
@@ -28,10 +29,10 @@ class RobotContainer:
         SmartDashboard.putData( "Autonomous Mode", self.m_autoChooser )
 
         # Default Commands
-        self.m_subsys.setDefaultCommand( self.leftX )
+        self.m_driveTrain.setDefaultCommand( self.driveCommand )
 
         # Driver Controller Button Binding
-        self.m_driver1.a().whileTrue( self.rightX )
+        #self.m_driver1.a().whileTrue( self.rightX )
 
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:
