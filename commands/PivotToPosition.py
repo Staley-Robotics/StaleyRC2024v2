@@ -15,8 +15,6 @@ class PivotToPosition(Command):
 
         super().__init__()
 
-        SmartDashboard.putData(self)
-
     def initialize(self):
         return self.myPivot.setSetpoint( self.myPosition )
     
