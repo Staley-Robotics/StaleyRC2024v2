@@ -1,4 +1,5 @@
 from .DriveByStick import *
+from .FeederBalance import *
 from .FeederEject import *
 from .FeederHandoff import *
 from .FeederLaunch import *
@@ -9,13 +10,14 @@ from .LauncherStart import *
 from .PivotToPosition import *
 
 __all__ = [
-    "DriveByStick"
-    "FeederEject"
-    "FeederHandoff"
-    "FeederLaunch"
-    "IntakeEject"
-    "IntakeHandoff"
-    "IntakePickup"
-    "LauncherStart"
+    "DriveByStick",
+    "FeederEject",
+    "FeederHandoff",
+    "FeederLaunch",
+    "FeederBalance",
+    "IntakeEject",
+    "IntakeHandoff",
+    "IntakePickup",
+    "LauncherStart",
     "PivotToPosition"
 ]

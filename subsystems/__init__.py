@@ -5,13 +5,13 @@ from .Pivot import *
 from .SwerveDrive import *
 
 __all__ = [
-    "Feeder"
-    "FeederModes"
-    "Intake"
-    "IntakeOptions"
-    "Launcher"
-    "LauncherOptions"
-    "Pivot"
-    "PivotPositions"
+    "Feeder",
+    "FeederModes",
+    "Intake",
+    "IntakeOptions",
+    "Launcher",
+    "LauncherOptions",
+    "Pivot",
+    "PivotPositions",
     "SwerveDrive"
 ]
