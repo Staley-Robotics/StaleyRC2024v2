@@ -2,12 +2,12 @@ import math
 
 from commands2 import PIDSubsystem
 
+from ntcore import NetworkTableInstance, NetworkTable
 from wpilib import SmartDashboard, RobotBase, Mechanism2d, Color8Bit, RobotController
-from wpimath.controller import PIDController
-from wpilib.simulation import SingleJointedArmSim
-from wpimath.system import LinearSystem_2_1_2
-from wpimath.system.plant import DCMotor, LinearSystemId
+from wpimath.controller import PIDController, SimpleMotorFeedforwardRadians
+from wpimath.system.plant import DCMotor
 from wpimath.units import radiansToRotations, degrees, degreesToRotations, rotationsToDegrees
+
 from phoenix6.hardware import TalonFX, CANcoder
 from phoenix6.controls import VoltageOut, DutyCycleOut
 from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
@@ -24,60 +24,56 @@ class PivotPositions:
 
 class PivotConstants:
     # Constants
-    kP:float = 3.0
+    kP:float = 25.0
     kI:float = 0.0
     kD:float = 0.0
     kS:float = 0.1
     kV:float = 0.0
     kTolerance:float = 0.01 # 0.0028 # Rotations 1.0 # In Degrees
-    kGearRatio = 1 / 200
+    
+    kGearRatio:float = 1 / 200
+    kOffsetRotations:float = -0.2138 # Rotations? ### -76.993 #degrees
+
+    class FalconSim:
+        kMaxRps = radiansToRotations( DCMotor.falcon500FOC(1).freeSpeed )
 
 class Pivot(PIDSubsystem):
     # Motors
-    m_motor:TalonFX = None
-    m_encoder:CANcoder = None
-    c_offset = -0.2138 # Rotations? ### -76.993 #degrees
+    __motor:TalonFX = None
+    __encoder:CANcoder = None
+    __logger:NetworkTable = None
+    c_offset = -0.2138 
 
     def __init__(self):
         # Motor
-        m_motorCfg = TalonFXConfiguration()
-        m_motorCfg.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
-        m_motorCfg.motor_output.neutral_mode = NeutralModeValue.COAST
-        m_motorCfg.motor_output.duty_cycle_neutral_deadband = 0.001
-        self.m_motor = TalonFX( 25, "canivore1" )
-        self.m_motor.configurator.apply( m_motorCfg )
+        motorCfg = TalonFXConfiguration()
+        motorCfg.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
+        motorCfg.motor_output.neutral_mode = NeutralModeValue.COAST
+        motorCfg.motor_output.duty_cycle_neutral_deadband = 0.001
+        self.__motor = TalonFX( 25, "canivore1" )
+        self.__motor.configurator.apply( motorCfg )
         self.voltOut = VoltageOut(0, use_timesync=True)
         self.dutyOut = DutyCycleOut(0, use_timesync=True)
-        
-        # Simulation Motor
-        self.s_motor = DCMotor.falcon500FOC(1)
-        self.s_motorSim = SingleJointedArmSim(
-            LinearSystemId.singleJointedArmSystem( self.s_motor, 0.0005, 1.0 ),
-            self.s_motor,
-            1 / PivotConstants.kGearRatio,
-            0.2,
-            -math.pi * 1 / PivotConstants.kGearRatio,
-            math.pi * 1 / PivotConstants.kGearRatio,
-            False,
-            0
-        )
-        
+                
         # Encoder
-        m_encoderCfg = CANcoderConfiguration()
-        m_encoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
-        m_encoderCfg.magnet_sensor.sensor_direction = SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
-        if not RobotBase.isSimulation(): m_encoderCfg.magnet_sensor.magnet_offset = self.c_offset
-        self.m_encoder = CANcoder( 26, "canivore1" )
-        self.m_encoder.configurator.apply( m_encoderCfg )
+        encoderCfg = CANcoderConfiguration()
+        encoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
+        encoderCfg.magnet_sensor.sensor_direction = SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
+        if not RobotBase.isSimulation(): encoderCfg.magnet_sensor.magnet_offset = PivotConstants.kOffsetRotations
+        self.__encoder = CANcoder( 26, "canivore1" )
+        self.__encoder.configurator.apply( encoderCfg )
+
+        # PID Controller
+        pidController = PIDController( PivotConstants.kP, PivotConstants.kI, PivotConstants.kD )
+        pidController.setTolerance( PivotConstants.kTolerance )
+        pidController.enableContinuousInput( -0.5, 0.5 )
 
         super().__init__(
-            PIDController( PivotConstants.kP, PivotConstants.kI, PivotConstants.kD ),
-            self.m_encoder.get_position().value
+            pidController,
+            self.__encoder.get_position().value
         )
 
-        # Controllers
-        self._controller.setTolerance( PivotConstants.kTolerance )
-        self._controller.enableContinuousInput( -1.0, 1.0 )
+        # Enable Subsystem PIDController
         self.enable()
 
         # Mechanism Graphics / Logging
@@ -90,41 +86,49 @@ class Pivot(PIDSubsystem):
         self.mechBack = self.mechPost.appendLigament( "PivotBack", 6, 0, 2, Color8Bit( 255, 0, 0) )
         SmartDashboard.putData( "PivotMech", self.mech )
         SmartDashboard.putData( "Pivot", self )
-        SmartDashboard.putData( "PivotMotor", self.m_motor )
-        SmartDashboard.putData( "PivotEncoder", self.m_encoder )
+        SmartDashboard.putData( "PivotMotor", self.__motor )
+        SmartDashboard.putData( "PivotEncoder", self.__encoder )
         SmartDashboard.putData( "PivotController", self._controller )
 
+        self.__logger:NetworkTable = NetworkTableInstance.getDefault().getTable( "/Logging/Pivot" )
+        self.__measured:NetworkTable = NetworkTableInstance.getDefault().getTable( "/RealOutputs/Pivot" )
+
     def periodic(self) -> None:
-        # Start of Subsystem Logging
+        # Input Logging
+        self.__logger.putNumber( "MotorInput", self.__motor.get() )
+        self.__logger.putNumber( "MotorOutput", self.__motor.get_motor_voltage().value )
+        self.__logger.putNumber( "MotorPosition_r", self.__motor.get_position().value )
+        self.__logger.putNumber( "MotorVelocity_rps", self.__motor.get_velocity().value )
+        self.__logger.putNumber( "EncoderPosition_r", self.__encoder.get_position().value )
+        self.__logger.putNumber( "EncoderVelocity_rps", self.__encoder.get_velocity().value )
         
         # Run
         super().periodic()
 
-        # Post Subsystem Logging
-        # Log Here
+        # Visualization
         offset = self.mechPost.getAngle()
         self.mechFront.setAngle( rotationsToDegrees( self.getMeasurement() ) - offset )
         self.mechBack.setAngle( rotationsToDegrees( self.getMeasurement() ) + 180 - offset )
 
+        # Output Logging
+        self.__measured.putNumber( "TargetAngle", rotationsToDegrees( self.getSetpoint() ) )
+        self.__measured.putNumber( "ActualAngle", rotationsToDegrees( self.getMeasurement() ) )
+
     def simulationPeriodic(self) -> None:
         # Simulation Motor Deadband
-        if self.atSetpoint() and abs( self.m_motor.get_duty_cycle().value ) <= 0.01:
-            self.m_motor.set_control( self.voltOut.with_output( 0.0 ) )
+        if self.atSetpoint() and abs( self.__motor.get_duty_cycle().value ) <= 0.011:
+            self.__motor.set_control( self.dutyOut.with_output( 0.0 ) )
 
         # Motor
-        self.m_motor.sim_state.set_supply_voltage( RobotController.getBatteryVoltage() )
-        self.s_motorSim.setInputVoltage( self.m_motor.sim_state.motor_voltage )
-        self.s_motorSim.update(0.02)
-        velocity = self.s_motorSim.getVelocity()
-        #velocity = self.s_motor.speed( self.s_motor.torque( self.m_motor.sim_state.supply_current), self.m_motor.sim_state.motor_voltage )
-        velocity = radiansToRotations( velocity )
+        self.__motor.sim_state.set_supply_voltage( RobotController.getBatteryVoltage() )
+        velocity = self.__motor.sim_state.motor_voltage / 12 * PivotConstants.FalconSim.kMaxRps
 
-        self.m_motor.sim_state.set_rotor_velocity( velocity )
-        self.m_motor.sim_state.add_rotor_position( velocity * 0.02 )
+        self.__motor.sim_state.set_rotor_velocity( velocity )
+        self.__motor.sim_state.add_rotor_position( velocity * 0.02 )
 
         # CANcoder
-        self.m_encoder.sim_state.set_velocity( velocity * PivotConstants.kGearRatio )
-        self.m_encoder.sim_state.add_position( velocity * PivotConstants.kGearRatio * 0.02 )
+        self.__encoder.sim_state.set_velocity( velocity * PivotConstants.kGearRatio )
+        self.__encoder.sim_state.add_position( velocity * PivotConstants.kGearRatio * 0.02 )
 
     def setSetpoint(self, setpoint:degrees):
         # Limits the specific range (Protects mechanism)
@@ -133,10 +137,14 @@ class Pivot(PIDSubsystem):
         return super().setSetpoint(setpoint)
 
     def useOutput(self, output:float, setpoint:float) -> None:
-        self.m_motor.set_control( self.dutyOut.with_output( output ) )
+        # Placeholder: Feed Forward Not Implemented
+        feedforward = SimpleMotorFeedforwardRadians( 0, 0, 0 ).calculate( setpoint ) 
+
+        # Sets the motor speed
+        self.__motor.set_control( self.dutyOut.with_output( output ) )
 
     def getMeasurement(self) -> float:
-        return self.m_encoder.get_position().value
+        return self.__encoder.get_position().value
 
     def atSetpoint(self) -> bool:
         return self._controller.atSetpoint()
