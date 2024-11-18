@@ -1,23 +1,21 @@
 from commands2 import Command
 
-from subsystems import Launcher
+from subsystems import Launcher, LauncherOptions
 
-class LauncherStart(Command):
+class LauncherStop(Command):
     # Initialization
     def __init__( self,
-                  mySubsystem:Launcher,
-                  mySpeed: float = 0.0
+                  mySubsystem:Launcher
                 ) -> None:
         # Command Attributes
         self.__launcher:Launcher = mySubsystem
-        self.__speed:float = mySpeed
 
-        self.setName( f"LauncherStart({self.__speed})" )
+        self.setName( f"LauncherStop" )
         self.addRequirements( mySubsystem )
 
     # On Start
     def initialize(self) -> None:
-        self.__launcher.setSetpoint( self.__speed )
+        self.__launcher.setSetpoint( LauncherOptions.STOP )
 
     # Periodic
     def execute(self) -> None:
@@ -25,11 +23,11 @@ class LauncherStart(Command):
 
     # On End
     def end(self, interrupted:bool) -> None:
-        return None #self.__launcher.stop()
+        self.__launcher.stop()
 
     # Is Finished
     def isFinished(self) -> bool:
-        return self.__launcher.atSetpoint()
+        return True # self.__launcher.hasLaunched()
 
     # Run When Disabled
     def runsWhenDisabled(self) -> bool:

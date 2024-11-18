@@ -10,7 +10,7 @@ class PivotToPosition(Command):
         self.__position:float = pivotPosition
 
         self.setName( f"PivotToPosition({self.__position})" )
-        self.addRequirements( self.myPivot )
+        self.addRequirements( self.__pivot )
 
     def initialize(self):
         return self.__pivot.setSetpoint( self.__position )

@@ -7,6 +7,7 @@ from .IntakeEject import *
 from .IntakeHandoff import *
 from .IntakePickup import *
 from .LauncherStart import *
+from .LauncherStop import *
 from .PivotToPosition import *
 
 __all__ = [
@@ -19,5 +20,6 @@ __all__ = [
     "IntakeHandoff",
     "IntakePickup",
     "LauncherStart",
+    "LauncherStop",
     "PivotToPosition"
 ]

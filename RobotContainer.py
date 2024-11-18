@@ -1,5 +1,5 @@
 from commands2 import Command
-from commands2.button import CommandXboxController
+from commands2.button import CommandXboxController, Trigger
 import commands2.cmd as cmd
 from wpilib import SendableChooser, SmartDashboard
 from wpilib.shuffleboard import Shuffleboard
@@ -42,7 +42,13 @@ class RobotContainer:
         cmdLaunchLong    = LauncherStart( sysLauncher, LauncherOptions.LONG )
         cmdLaunchToss    = LauncherStart( sysLauncher, LauncherOptions.TOSS )
         cmdLaunchAmp     = LauncherStart( sysLauncher, LauncherOptions.AMP )
-        cmdLaunchStop    = LauncherStart( sysLauncher, LauncherOptions.STOP )
+        cmdLaunchStop    = LauncherStop( sysLauncher )
+
+        # Sequences
+        seqPickup = cmdIntakePickup.alongWith( cmdPivotHandoff ).andThen( cmdFeederReceive.alongWith( cmdIntakeHandoff ) )
+        seqPickup = seqPickup.withName( "PickupSequence" )
+        seqLaunch = cmdLaunchLong.andThen( cmdFeederLaunch ).andThen( cmdLaunchStop )
+        seqLaunch = seqLaunch.withName( "LaunchSequence" )
 
         # Special Command Handling
         sysFeeder.addBalanceCommand( cmdFeederBalance )
@@ -58,6 +64,8 @@ class RobotContainer:
         # Driver Controller Button Binding
         driver1.a().toggleOnTrue( cmdIntakePickup )
         driver1.b().toggleOnTrue( cmdIntakeHandoff )
+        driver1.x().and_( lambda: not sysFeeder.hasSecuredNote() ).toggleOnTrue( seqPickup )
+        driver1.y().and_( lambda: sysFeeder.hasSecuredNote() ).toggleOnTrue( seqLaunch )
         
         # Dashboard Commands
         self.addDashboardCommands( "Intake",   [cmdIntakeHandoff, cmdIntakePickup, cmdIntakeEject] )
