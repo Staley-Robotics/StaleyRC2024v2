@@ -8,8 +8,13 @@ from wpilib.shuffleboard import Shuffleboard
 
 from commands.SampleCommand import SampleCommand
 from commands.DriveByStick import DriveByStick
+from commands.FeederEject import FeederEject
+from commands.FeederHandoff import FeederHandoff
+from commands.FeederLaunch import FeederLaunch
+
 from subsystems.SampleSubsystem import SampleSubsystem
 from subsystems.SwerveDrive import SwerveDrive
+from subsystems.Feeder import Feeder
 
 class RobotContainer:
     # Variable Declaration
@@ -23,12 +28,16 @@ class RobotContainer:
         # Declare Subsystems
         self.m_driveTrain = SwerveDrive()
         self.m_intake = Intake()
+        self.__feeder = Feeder()
 
         # Commands
         self.driveCommand = DriveByStick(self.m_driveTrain, self.m_driver1.getLeftX, self.m_driver1.getLeftY, self.m_driver1.getRightY )
         self.intakeHandoff = IntakeHandoff( self.m_intake )
         self.intakePickup = IntakePickup( self.m_intake )
         self.intakeEject = IntakeEject( self.m_intake )
+        self.feederReceive = FeederHandoff(self.__feeder )
+        self.feederLaunch = FeederLaunch(self.__feeder )
+        self.feederEject = FeederEject(self.__feeder)
         
         # Autonomous Chooser
         self.m_autoChooser = SendableChooser()
@@ -41,6 +50,10 @@ class RobotContainer:
         # Driver Controller Button Binding
         self.m_driver1.a().toggleOnTrue( self.intakePickup )
         self.m_driver1.b().toggleOnTrue( self.intakeHandoff )
+        
+        # Dashboard Commands
+        self.addDashboardCommands( "Intake", [self.intakeHandoff, self.intakePickup, self.intakeEject] )
+        self.addDashboardCommands( "Feeder", [self.feederReceive, self.feederLaunch, self.feederEject] )
 
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:
@@ -49,10 +62,9 @@ class RobotContainer:
             return chooserValue
         else:
             return cmd.none()
-          
+        
     # Publish Commands To Dashboards
-    def addDashboardCommands( self, tabName:str, dashboardCommands:list[Command] ) -> None:
+    def addDashboardCommands( self, tabName:str, dashboardCommands:list[Command] ):
         tab = Shuffleboard.getTab( tabName )
-        for x in range(len(dashboardCommands)):
-            myCmd:Command = dashboardCommands[x]
-            tab.add( title=f"{myCmd.getName()}", defaultValue=myCmd )
+        for i in range(len(dashboardCommands)):
+            tab.add( dashboardCommands[i].getName(), dashboardCommands[i] )
