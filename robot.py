@@ -1,15 +1,28 @@
-from wpilib import TimedRobot
+from pathlib import Path
+
 from commands2 import Command, CommandScheduler
+
+from wpilib import TimedRobot, DriverStation, DataLogManager, RobotBase
+
 from RobotContainer import RobotContainer
 
 class MyRobot(TimedRobot):
     # Variable Declaration
-    m_robotContainer:RobotContainer = None
-    m_autonomousCommand:Command = None
+    __robotContainer:RobotContainer = None
+    __autoCmd:Command = None
 
     # Initialization
     def robotInit(self):
-        self.m_robotContainer = RobotContainer()
+        # Disable Notifications
+        DriverStation.silenceJoystickConnectionWarning(True)
+
+        # Start Logging using the built in DataLogManager
+        # logDir = '/U/logs' if RobotBase.isReal() else '.logs'
+        # DataLogManager.start( dir=(logDir if Path(logDir).is_dir() else ''), period=1.0 )
+        # DriverStation.startDataLog( DataLogManager.getLog() )
+        
+        # Built The Robot
+        self.__robotContainer = RobotContainer()
 
     # Periodic Loop / All Modes
     def robotPeriodic(self):
@@ -17,13 +30,15 @@ class MyRobot(TimedRobot):
 
     # Autonomous Mode
     def autonomousInit(self):
-        self.m_autonomousCommand = self.m_robotContainer.getAutonomousCommand()
+        self.__autoCmd = self.__robotContainer.getAutonomousCommand()
+        if self.__autoCmd != None:
+            self.__autoCmd.schedule()
     
     def autonomousPeriodic(self): pass
 
     def autonomousExit(self):
-        if self.m_autonomousCommand != None:
-            self.m_autonomousCommand.cancel()
+        if self.__autoCmd != None:
+            self.__autoCmd.cancel()
 
     # Teleop Mode
     def teleopInit(self): pass

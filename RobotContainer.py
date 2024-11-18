@@ -12,11 +12,13 @@ from commands.FeederEject import FeederEject
 from commands.FeederHandoff import FeederHandoff
 from commands.FeederLaunch import FeederLaunch
 from commands.PivotToPosition import PivotToPosition
+from commands.LauncherStart import LauncherStart
 
 from subsystems.SampleSubsystem import SampleSubsystem
 from subsystems.SwerveDrive import SwerveDrive
 from subsystems.Feeder import Feeder
 from subsystems.Pivot import Pivot, PivotPositions
+from subsystems.Launcher import Launcher, LauncherOptions
 
 class RobotContainer:
     # Variable Declaration
@@ -32,6 +34,7 @@ class RobotContainer:
         self.m_intake = Intake()
         self.__feeder = Feeder()
         self.pivot = Pivot()
+        self.__launcher = Launcher()
 
         # Commands
         self.driveCommand = DriveByStick(self.m_driveTrain, self.m_driver1.getLeftX, self.m_driver1.getLeftY, self.m_driver1.getRightY )
@@ -48,6 +51,10 @@ class RobotContainer:
         self.pivotToss    = PivotToPosition( self.pivot, PivotPositions.TOSS )
         self.pivotFlat    = PivotToPosition( self.pivot, PivotPositions.FLAT )
         self.pivotLow     = PivotToPosition( self.pivot, PivotPositions.MIN )
+        self.launchLong = LauncherStart( self.__launcher, LauncherOptions.LONG )
+        self.launchToss = LauncherStart( self.__launcher, LauncherOptions.TOSS )
+        self.launchAmp = LauncherStart( self.__launcher, LauncherOptions.AMP )
+        self.launchStop = LauncherStart( self.__launcher, LauncherOptions.STOP )
 
         # Autonomous Chooser
         self.m_autoChooser = SendableChooser()
@@ -65,6 +72,7 @@ class RobotContainer:
         self.addDashboardCommands( "Intake", [self.intakeHandoff, self.intakePickup, self.intakeEject] )
         self.addDashboardCommands( "Feeder", [self.feederReceive, self.feederLaunch, self.feederEject] )
         self.addDashboardCommands( "Pivot", [self.pivotHigh, self.pivotAmp, self.pivotSpeaker, self.pivotHandoff, self.pivotToss, self.pivotFlat, self.pivotLow] )
+        self.addDashboardCommands( "Launcher", [self.launchLong, self.launchToss, self.launchAmp, self.launchStop] )
 
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:
