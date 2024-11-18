@@ -84,11 +84,9 @@ class Pivot(PIDSubsystem):
         self.mechPostTop = self.mechPost.appendLigament( "PivotPostTop", 5, 0, 2, Color8Bit( 0, 0, 255 ) )
         self.mechFront = self.mechPost.appendLigament( "PivotFront", 4, 0, 2, Color8Bit( 0, 255, 0) )
         self.mechBack = self.mechPost.appendLigament( "PivotBack", 6, 0, 2, Color8Bit( 255, 0, 0) )
-        SmartDashboard.putData( "PivotMech", self.mech )
         SmartDashboard.putData( "Pivot", self )
-        SmartDashboard.putData( "PivotMotor", self.__motor )
-        SmartDashboard.putData( "PivotEncoder", self.__encoder )
-        SmartDashboard.putData( "PivotController", self._controller )
+        SmartDashboard.putData( "PivotMech", self.mech )
+        SmartDashboard.putData( "PivotPid", self._controller )
 
         self.__logger:NetworkTable = NetworkTableInstance.getDefault().getTable( "/Logging/Pivot" )
         self.__measured:NetworkTable = NetworkTableInstance.getDefault().getTable( "/RealOutputs/Pivot" )
