@@ -1,12 +1,22 @@
+import typing
+
 from commands2 import Command
 from commands2.button import CommandXboxController
 import commands2.cmd as cmd
 from wpilib import SendableChooser, SmartDashboard
+from wpilib.shuffleboard import Shuffleboard
 
-#from commands.SampleCommand import SampleCommand
-#from subsystems.SampleSubsystem import SampleSubsystem
-from subsystems.Pivot import Pivot, PivotPositions
+from commands.SampleCommand import SampleCommand
+from commands.DriveByStick import DriveByStick
+from commands.FeederEject import FeederEject
+from commands.FeederHandoff import FeederHandoff
+from commands.FeederLaunch import FeederLaunch
 from commands.PivotToPosition import PivotToPosition
+
+from subsystems.SampleSubsystem import SampleSubsystem
+from subsystems.SwerveDrive import SwerveDrive
+from subsystems.Feeder import Feeder
+from subsystems.Pivot import Pivot, PivotPositions
 
 class RobotContainer:
     # Variable Declaration
@@ -18,12 +28,19 @@ class RobotContainer:
         self.m_driver1 = CommandXboxController( 0 )
 
         # Declare Subsystems
-        #self.m_subsys = SampleSubsystem( 0 )
+        self.m_driveTrain = SwerveDrive()
+        self.m_intake = Intake()
+        self.__feeder = Feeder()
         self.pivot = Pivot()
 
         # Commands
-        #self.leftX = SampleCommand(self.m_subsys, self.m_driver1.getLeftX )
-        #self.rightX = SampleCommand(self.m_subsys, self.m_driver1.getRightX )
+        self.driveCommand = DriveByStick(self.m_driveTrain, self.m_driver1.getLeftX, self.m_driver1.getLeftY, self.m_driver1.getRightY )
+        self.intakeHandoff = IntakeHandoff( self.m_intake )
+        self.intakePickup = IntakePickup( self.m_intake )
+        self.intakeEject = IntakeEject( self.m_intake )
+        self.feederReceive = FeederHandoff(self.__feeder )
+        self.feederLaunch = FeederLaunch(self.__feeder )
+        self.feederEject = FeederEject(self.__feeder)
         self.pivotHigh    = PivotToPosition( self.pivot, PivotPositions.MAX )
         self.pivotAmp     = PivotToPosition( self.pivot, PivotPositions.AMP )
         self.pivotSpeaker = PivotToPosition( self.pivot, PivotPositions.SPEAKER )
@@ -38,16 +55,16 @@ class RobotContainer:
         SmartDashboard.putData( "Autonomous Mode", self.m_autoChooser )
 
         # Default Commands
-        #self.m_subsys.setDefaultCommand( self.leftX )
+        self.m_driveTrain.setDefaultCommand( self.driveCommand )
 
         # Driver Controller Button Binding
-        #self.m_driver1.a().whileTrue( self.rightX )
-        self.m_driver1.leftBumper().onTrue( self.pivotHigh )
-        self.m_driver1.y().onTrue( self.pivotAmp )
-        self.m_driver1.x().onTrue( self.pivotSpeaker )
-        self.m_driver1.b().onTrue( self.pivotToss )
-        self.m_driver1.a().onTrue( self.pivotFlat )
-        self.m_driver1.rightBumper().onTrue( self.pivotLow )
+        self.m_driver1.a().toggleOnTrue( self.intakePickup )
+        self.m_driver1.b().toggleOnTrue( self.intakeHandoff )
+        
+        # Dashboard Commands
+        self.addDashboardCommands( "Intake", [self.intakeHandoff, self.intakePickup, self.intakeEject] )
+        self.addDashboardCommands( "Feeder", [self.feederReceive, self.feederLaunch, self.feederEject] )
+        self.addDashboardCommands( "Pivot", [self.pivotHigh, self.pivotAmp, self.pivotSpeaker, self.pivotHandoff, self.pivotToss, self.pivotFlat, self.pivotLow] )
 
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:
@@ -56,3 +73,9 @@ class RobotContainer:
             return chooserValue
         else:
             return cmd.none()
+        
+    # Publish Commands To Dashboards
+    def addDashboardCommands( self, tabName:str, dashboardCommands:list[Command] ):
+        tab = Shuffleboard.getTab( tabName )
+        for i in range(len(dashboardCommands)):
+            tab.add( dashboardCommands[i].getName(), dashboardCommands[i] )
