@@ -20,26 +20,6 @@ class FeederConstants:
     class NeoSim:
         kMaxRpm = DCMotor.NEO(1).freeSpeed * kSecondsPerMinute
 
-class FeederBalance(Command):
-    def __init__(self, intake:Subsystem):
-        self.setName( "FeederBalance" )
-        self.addRequirements( intake )
-        self.__feeder:Feeder = intake
-
-    def initialize(self):
-        if self.__feeder.topHasNote():
-            self.__feeder.setSetpoint( FeederModes.BALANCEOUT )
-        elif self.__feeder.bottomHasNote():
-            self.__feeder.setSetpoint( FeederModes.BALANCEIN )
-        else:
-            self.__feeder.setSetpoint( FeederModes.STOP )
-
-    def end(self, interrupted):
-        self.__feeder.stop()
-    
-    def isFinished(self):
-        return self.__feeder.bottomHasNote() == self.__feeder.topHasNote()
-
 class Feeder(Subsystem):
     # Variable Declaration
     __motor:SparkMax = None
@@ -47,6 +27,7 @@ class Feeder(Subsystem):
     __bottomIrBeam:DigitalInput = None
     __topIrBeam:DigitalInput = None
     __logging:NetworkTable = None
+    __balanceCmd:Command = None
 
     # Initialization
     def __init__(self) -> None:
@@ -65,15 +46,12 @@ class Feeder(Subsystem):
         self.__bottomIrBeam:DigitalInput = DigitalInput(1)
         self.__topIrBeam:DigitalInput = DigitalInput(2)
         
-        # Internal Commands
-        self.balanceCmd = FeederBalance(self)
-
         # Logging
         self.__logger = NetworkTableInstance.getDefault().getTable("/Logging/Feeder")
         self.__measured = NetworkTableInstance.getDefault().getTable("/RealOutputs/Feeder")
 
         # Dashboards
-        SmartDashboard.putData( "Intake", self )
+        SmartDashboard.putData( "Feeder", self )
 
     # Periodic Loop
     def periodic(self) -> None:
@@ -97,9 +75,9 @@ class Feeder(Subsystem):
         self.__measured.putBoolean( "HasNoteBottom", self.bottomHasNote() )
         
         # Misaligned Note Correction
-        if self.getCurrentCommand() == None:
+        if self.getCurrentCommand() == None and self.__balanceCmd != None:
             if self.bottomHasNote() != self.topHasNote():
-                self.balanceCmd.schedule()
+                self.__balanceCmd.schedule()
 
     def simulationPeriodic(self) -> None:
         # Motor Position and Velocity
@@ -116,6 +94,12 @@ class Feeder(Subsystem):
     # Stop the Subsystem
     def stop(self) -> None:
         self.setSetpoint( FeederModes.STOP )
+
+    def addBalanceCommand(self, cmd:Command) -> None:
+        self.__balanceCmd = cmd
+
+    def removeBalanceCommand(self) -> None:
+        self.__balanceCmd = None
 
     # Set the Desired State Value
     def setSetpoint(self, value:float) -> None:

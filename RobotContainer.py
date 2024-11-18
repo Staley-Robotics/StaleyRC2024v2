@@ -26,13 +26,14 @@ class RobotContainer:
         self.__launcher = Launcher()
 
         # Commands
-        self.driveCommand  = DriveByStick(self.m_driveTrain, self.m_driver1.getLeftX, self.m_driver1.getLeftY, self.m_driver1.getRightY )
+        self.driveCommand  = DriveByStick( self.m_driveTrain, self.m_driver1.getLeftX, self.m_driver1.getLeftY, self.m_driver1.getRightY )
         self.intakeHandoff = IntakeHandoff( self.m_intake )
         self.intakePickup  = IntakePickup( self.m_intake )
         self.intakeEject   = IntakeEject( self.m_intake )
-        self.feederReceive = FeederHandoff(self.__feeder )
-        self.feederLaunch  = FeederLaunch(self.__feeder )
-        self.feederEject   = FeederEject(self.__feeder)
+        self.feederReceive = FeederHandoff( self.__feeder )
+        self.feederLaunch  = FeederLaunch( self.__feeder )
+        self.feederEject   = FeederEject( self.__feeder )
+        self.feederBalance = FeederBalance( self.__feeder )
         self.pivotHigh     = PivotToPosition( self.pivot, PivotPositions.MAX )
         self.pivotAmp      = PivotToPosition( self.pivot, PivotPositions.AMP )
         self.pivotSpeaker  = PivotToPosition( self.pivot, PivotPositions.SPEAKER )
@@ -44,6 +45,9 @@ class RobotContainer:
         self.launchToss    = LauncherStart( self.__launcher, LauncherOptions.TOSS )
         self.launchAmp     = LauncherStart( self.__launcher, LauncherOptions.AMP )
         self.launchStop    = LauncherStart( self.__launcher, LauncherOptions.STOP )
+
+        # Special Command Handling
+        self.__feeder.addBalanceCommand( self.feederBalance )
 
         # Autonomous Chooser
         self.m_autoChooser = SendableChooser()
@@ -59,7 +63,7 @@ class RobotContainer:
         
         # Dashboard Commands
         self.addDashboardCommands( "Intake",   [self.intakeHandoff, self.intakePickup, self.intakeEject] )
-        self.addDashboardCommands( "Feeder",   [self.feederReceive, self.feederLaunch, self.feederEject] )
+        self.addDashboardCommands( "Feeder",   [self.feederReceive, self.feederLaunch, self.feederEject, self.feederBalance] )
         self.addDashboardCommands( "Pivot",    [self.pivotHigh, self.pivotAmp, self.pivotSpeaker, self.pivotHandoff, self.pivotToss, self.pivotFlat, self.pivotLow] )
         self.addDashboardCommands( "Launcher", [self.launchLong, self.launchToss, self.launchAmp, self.launchStop] )
 
