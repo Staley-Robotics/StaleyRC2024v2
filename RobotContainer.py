@@ -1,5 +1,3 @@
-import typing
-
 from commands2 import Command
 from commands2.button import CommandXboxController
 import commands2.cmd as cmd
@@ -11,65 +9,65 @@ from subsystems import *
 
 class RobotContainer:
     # Variable Declaration
-    m_autoChooser:SendableChooser = None
+    __autoChooser:SendableChooser = None
 
     # Initialization
     def __init__(self):
         # Driver Controller
-        self.m_driver1 = CommandXboxController( 0 )
+        driver1 = CommandXboxController( 0 )
 
         # Declare Subsystems
-        self.m_driveTrain = SwerveDrive()
-        self.m_intake = Intake()
-        self.__feeder = Feeder()
-        self.pivot = Pivot()
-        self.__launcher = Launcher()
+        sysDriveTrain = SwerveDrive()
+        sysIntake = Intake()
+        sysFeeder = Feeder()
+        sysPivot = Pivot()
+        sysLauncher = Launcher()
 
         # Commands
-        self.driveCommand  = DriveByStick( self.m_driveTrain, self.m_driver1.getLeftX, self.m_driver1.getLeftY, self.m_driver1.getRightY )
-        self.intakeHandoff = IntakeHandoff( self.m_intake )
-        self.intakePickup  = IntakePickup( self.m_intake )
-        self.intakeEject   = IntakeEject( self.m_intake )
-        self.feederReceive = FeederHandoff( self.__feeder )
-        self.feederLaunch  = FeederLaunch( self.__feeder )
-        self.feederEject   = FeederEject( self.__feeder )
-        self.feederBalance = FeederBalance( self.__feeder )
-        self.pivotHigh     = PivotToPosition( self.pivot, PivotPositions.MAX )
-        self.pivotAmp      = PivotToPosition( self.pivot, PivotPositions.AMP )
-        self.pivotSpeaker  = PivotToPosition( self.pivot, PivotPositions.SPEAKER )
-        self.pivotHandoff  = PivotToPosition( self.pivot, PivotPositions.HANDOFF )
-        self.pivotToss     = PivotToPosition( self.pivot, PivotPositions.TOSS )
-        self.pivotFlat     = PivotToPosition( self.pivot, PivotPositions.FLAT )
-        self.pivotLow      = PivotToPosition( self.pivot, PivotPositions.MIN )
-        self.launchLong    = LauncherStart( self.__launcher, LauncherOptions.LONG )
-        self.launchToss    = LauncherStart( self.__launcher, LauncherOptions.TOSS )
-        self.launchAmp     = LauncherStart( self.__launcher, LauncherOptions.AMP )
-        self.launchStop    = LauncherStart( self.__launcher, LauncherOptions.STOP )
+        cmdDriveCommand  = DriveByStick( sysDriveTrain, driver1.getLeftX, driver1.getLeftY, driver1.getRightY )
+        cmdIntakeHandoff = IntakeHandoff( sysIntake )
+        cmdIntakePickup  = IntakePickup( sysIntake )
+        cmdIntakeEject   = IntakeEject( sysIntake )
+        cmdFeederReceive = FeederHandoff( sysFeeder )
+        cmdFeederLaunch  = FeederLaunch( sysFeeder )
+        cmdFeederEject   = FeederEject( sysFeeder )
+        cmdFeederBalance = FeederBalance( sysFeeder )
+        cmdPivotHigh     = PivotToPosition( sysPivot, PivotPositions.MAX )
+        cmdPivotAmp      = PivotToPosition( sysPivot, PivotPositions.AMP )
+        cmdPivotSpeaker  = PivotToPosition( sysPivot, PivotPositions.SPEAKER )
+        cmdPivotHandoff  = PivotToPosition( sysPivot, PivotPositions.HANDOFF )
+        cmdPivotToss     = PivotToPosition( sysPivot, PivotPositions.TOSS )
+        cmdPivotFlat     = PivotToPosition( sysPivot, PivotPositions.FLAT )
+        cmdPivotLow      = PivotToPosition( sysPivot, PivotPositions.MIN )
+        cmdLaunchLong    = LauncherStart( sysLauncher, LauncherOptions.LONG )
+        cmdLaunchToss    = LauncherStart( sysLauncher, LauncherOptions.TOSS )
+        cmdLaunchAmp     = LauncherStart( sysLauncher, LauncherOptions.AMP )
+        cmdLaunchStop    = LauncherStart( sysLauncher, LauncherOptions.STOP )
 
         # Special Command Handling
-        self.__feeder.addBalanceCommand( self.feederBalance )
+        sysFeeder.addBalanceCommand( cmdFeederBalance )
 
         # Autonomous Chooser
-        self.m_autoChooser = SendableChooser()
-        self.m_autoChooser.setDefaultOption( "1 - None", cmd.none() )
-        SmartDashboard.putData( "Autonomous Mode", self.m_autoChooser )
+        self.__autoChooser = SendableChooser()
+        self.__autoChooser.setDefaultOption( "1 - None", cmd.none() )
+        SmartDashboard.putData( "Autonomous Mode", self.__autoChooser )
 
         # Default Commands
-        self.m_driveTrain.setDefaultCommand( self.driveCommand )
+        sysDriveTrain.setDefaultCommand( cmdDriveCommand )
 
         # Driver Controller Button Binding
-        self.m_driver1.a().toggleOnTrue( self.intakePickup )
-        self.m_driver1.b().toggleOnTrue( self.intakeHandoff )
+        driver1.a().toggleOnTrue( cmdIntakePickup )
+        driver1.b().toggleOnTrue( cmdIntakeHandoff )
         
         # Dashboard Commands
-        self.addDashboardCommands( "Intake",   [self.intakeHandoff, self.intakePickup, self.intakeEject] )
-        self.addDashboardCommands( "Feeder",   [self.feederReceive, self.feederLaunch, self.feederEject, self.feederBalance] )
-        self.addDashboardCommands( "Pivot",    [self.pivotHigh, self.pivotAmp, self.pivotSpeaker, self.pivotHandoff, self.pivotToss, self.pivotFlat, self.pivotLow] )
-        self.addDashboardCommands( "Launcher", [self.launchLong, self.launchToss, self.launchAmp, self.launchStop] )
+        self.addDashboardCommands( "Intake",   [cmdIntakeHandoff, cmdIntakePickup, cmdIntakeEject] )
+        self.addDashboardCommands( "Feeder",   [cmdFeederReceive, cmdFeederLaunch, cmdFeederEject, cmdFeederBalance] )
+        self.addDashboardCommands( "Pivot",    [cmdPivotHigh, cmdPivotAmp, cmdPivotSpeaker, cmdPivotHandoff, cmdPivotToss, cmdPivotFlat, cmdPivotLow] )
+        self.addDashboardCommands( "Launcher", [cmdLaunchLong, cmdLaunchToss, cmdLaunchAmp, cmdLaunchStop] )
 
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:
-        chooserValue = self.m_autoChooser.getSelected()
+        chooserValue = self.__autoChooser.getSelected()
         if type(chooserValue) == Command:
             return chooserValue
         else:
