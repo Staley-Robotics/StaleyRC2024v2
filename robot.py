@@ -17,9 +17,9 @@ class MyRobot(TimedRobot):
         DriverStation.silenceJoystickConnectionWarning(True)
 
         # Start Logging using the built in DataLogManager
-        logDir = '/U/logs' if RobotBase.isReal() else '.logs'
-        DataLogManager.start( dir=(logDir if Path(logDir).is_dir() else ''), period=1.0 )
-        DriverStation.startDataLog( DataLogManager.getLog() )
+        # logDir = '/U/logs' if RobotBase.isReal() else '.logs'
+        # DataLogManager.start( dir=(logDir if Path(logDir).is_dir() else ''), period=1.0 )
+        # DriverStation.startDataLog( DataLogManager.getLog() )
         
         # Built The Robot
         self.__robotContainer = RobotContainer()
