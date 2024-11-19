@@ -6,6 +6,10 @@ from commands2 import Command, Subsystem
 
 from subsystems.SwerveDrive import SwerveDrive
 
+# import ntcore.util as ntu
+# ntu.ntproperty
+# ntu._NtProperty
+
 class DriveByStick(Command):
     # Variable Declaration
     m_subsystem:SwerveDrive = None
@@ -23,7 +27,7 @@ class DriveByStick(Command):
                  rotation:Callable
                  ) -> None:
         # Command Setup
-        self.drive = swerveDrive
+        self.drive:SwerveDrive = swerveDrive
         self.setName( "DriveByStick" )
         self.addRequirements( swerveDrive )
 
@@ -42,7 +46,7 @@ class DriveByStick(Command):
         ySpeed = applyDeadband(self.vY(), self.controller_deadband) * self.drive.k_maxSpeed
         rotSpeed = applyDeadband(self.rO(), self.controller_deadband) * self.drive.k_maxSpeed
 
-        self.drive.drive(xSpeed, ySpeed, rotSpeed, True)
+        self.drive.drive(-xSpeed, -ySpeed, rotSpeed, True)
 
     # On End
     def end(self, interrupted:bool) -> None:

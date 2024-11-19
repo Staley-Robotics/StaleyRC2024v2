@@ -14,11 +14,10 @@ from util.Tunable import Tunable
 
 class SwerveDrive(Subsystem):
     # Variable Declaration
-    m_value:float = 0.0
     m_system:int = None
     m_logging:NetworkTable = None
 
-    k_maxSpeed:float = 2.5 # meters / sec
+    k_maxSpeed:float = 3.0 # meters / sec
 
     def __init__(self, sysId:int, modules:list[SwerveModule], gyro:W_Pigeon2) -> None:
         ##Subsystem Inits
@@ -29,7 +28,9 @@ class SwerveDrive(Subsystem):
         self.m_value = 0.0
         self.m_logging = NetworkTableInstance.getDefault().getTable("/Logging/SwerveDrive")
 
-        self.test = Tunable('/Logging/SwerveDrive', 'test', 93.45)
+        # self.test_tunable = Tunable("/Config/SwerveDrive", "test tunable", 0.0, lambda: self.m_logging.putNumber("does tunable work?", self.test_tunable.get()))
+
+        # self.m_logging.putNumber("/Config/SwervDrive/Override drive FF", 0.0)
 
         ##Swerve Inits
         #SwerveModule offsets from center, in meters
@@ -63,11 +64,13 @@ class SwerveDrive(Subsystem):
 
     def periodic(self) -> None:
         ## Logging: Write Current Subsystem State
-        self.m_logging.putNumber( "Drive Exists", 0.0 )
-        # Update Tunables
-        self.test.update()
-        
-        self.test.set(self.test.get() + 0.5)
+        self.m_logging.putNumber( "Gyro value", self.gyro.get_rotation_2d().degrees() )
+        for module in self.modules:
+            self.m_logging.putNumber( f"SwerveModule{module.ssName} velocity measured", module.getDriveVelocity() )
+            self.m_logging.putNumber( f"SwerveModule{module.ssName} angle measured", module.getAbsoluteEncoderPosition() )
+
+        # self.m_logging.putNumber( "does this tunable work?", self.)
+        # Update Tunables        
         
 
         # Run Subsystem: Set New State To Subsystem
@@ -81,10 +84,11 @@ class SwerveDrive(Subsystem):
         # self.m_logging.putNumber( "Measured", self.m_system )
 
     def drive(self,
-              xSpeed:float, ySpeed:float,
+              xSpeed:float,
+              ySpeed:float,
               rot:float,
               fieldRelative:bool,
-              periodSeconds:float=...) -> None:
+              ) -> None:
         """
         Parameters to construct desired ChassisSpeeds
         :param xSpeed: Speed of the robot in the x direction (forward).
@@ -94,20 +98,28 @@ class SwerveDrive(Subsystem):
         :param periodSeconds: Time
         """
         #get module states through kinematics
-        swerveModuleStates = self.kinematics.toSwerveModuleStates(
-            # ChassisSpeeds.discretize(
-                ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, self.gyro.get_rotation_2d()) if fieldRelative
-                else ChassisSpeeds(xSpeed, ySpeed, rot)#,
-
-                # periodSeconds
-            # )
-        )
-
+        if fieldRelative:
+            swerveModuleStates = self.kinematics.toSwerveModuleStates(
+                ChassisSpeeds.discretize(
+                    ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, self.gyro.get_rotation_2d()),
+                    0.02
+                )
+            )
+        else:
+            swerveModuleStates = self.kinematics.toSwerveModuleStates(
+                ChassisSpeeds.discretize(
+                    ChassisSpeeds(xSpeed, ySpeed, rot),
+                    0.02
+                )
+            )
+            
         #handle desired speeds > max speed
-        SwerveDrive4Kinematics.desaturateWheelSpeeds( swerveModuleStates, self.k_maxSpeed )
+        swerveModuleStates = SwerveDrive4Kinematics.desaturateWheelSpeeds( swerveModuleStates, self.k_maxSpeed )
 
         for i, module in enumerate(self.modules):
             module.setDesiredState(swerveModuleStates[i])
+        # self.modules[2].setDesiredState(swerveModuleStates[2])
+        
     
     def updateOdometry(self) -> None:
         """update field relative position of robot"""

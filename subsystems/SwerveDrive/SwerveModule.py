@@ -1,10 +1,14 @@
-from rev import SparkMax
+from rev import SparkMax, SparkMaxConfig
 from phoenix6.hardware import CANcoder
+from phoenix6.configs import CANcoderConfiguration, MagnetSensorConfigs
 
 from wpimath.controller import PIDController, ProfiledPIDController, SimpleMotorFeedforwardMeters
 from wpimath.trajectory import TrapezoidProfile
 from wpimath.kinematics import SwerveModuleState, SwerveModulePosition
 from wpimath.geometry import Rotation2d
+from wpimath.units import rotationsToRadians, rotationsPerMinuteToRadiansPerSecond
+
+from wpilib import SmartDashboard
 
 from math import pi
 
@@ -13,67 +17,83 @@ class SwerveModule:
     kMaxVelocity = pi
     kMaxAcceleration = pi * 2
 
+    k_drive_gear_ratio = 1 / 6.75
+    k_wheel_radius = 0.0508
+
     def __init__(self,
                  ssName:str,
                  drive_motor_port:int,
                  turn_motor_port:int,
                  abs_encoder_port:int, abs_encoder_offset:float) -> None:
-        ##Tunables
-        #PID vals
-        self.drive_kP = 0.0# make these tunable
-        self.drive_kD = 0.0
+        self.ssName = ssName
 
-        self.turn_kP = 0.0
-        self.turn_kD = 0.0
-
-        # self.turn_motor_inverted = NTTunableBoolean(f'/Swerve/modules/{ssName}/turnMotorInverted', False, lambda:(self.turn_motor.setInverted(self.turn_motor_inverted.get())))
-        self.turn_motor_inverted = False
+        ##Data Vals
+        self.turn_motor_inverted = True
 
         ##Physical Component Inits
-        print('If nothing is printed after this, the motors dont like existing')
         self.drive_motor = SparkMax( drive_motor_port, SparkMax.MotorType.kBrushless )
         self.turn_motor = SparkMax( turn_motor_port, SparkMax.MotorType.kBrushless )
-        print('this is not nothing')
 
-        self.abs_turn_encoder = CANcoder(abs_encoder_port)
+        self.abs_turn_encoder = CANcoder(abs_encoder_port, "canivore1")
         self.abs_encoder_offset = abs_encoder_offset
 
         self.drive_motor_encoder = self.drive_motor.getEncoder()
         self.turn_motor_encoder = self.turn_motor.getEncoder()
 
-        #Configs
-        #change CAN timeout for cofigurating & run multiple times to ensure settings
-        # self.drive_motor.restoreFactoryDefaults()
-        # self.turn_motor.restoreFactoryDefaults()
+        ##Configs
 
-        self.turn_motor.setInverted(self.turn_motor_inverted)
-        #current limiting & Voltage Compensation
+        #Things to config probably:
+        # change CAN timeout for cofigurating
+        # run multiple times to ensure settings
+        # current limiting & Voltage Compensation
+        # set motor encoder positions, measurment periods, & depths
 
-        #set motor encoder positions, measurment periods, & depths
+        drive_config = SparkMaxConfig().setIdleMode( SparkMaxConfig.IdleMode.kBrake )
+        self.drive_motor.configure( drive_config, SparkMax.ResetMode.kResetSafeParameters, SparkMax.PersistMode.kPersistParameters )
+        turn_config = SparkMaxConfig().inverted(self.turn_motor_inverted)
+        self.turn_motor.configure( turn_config, SparkMax.ResetMode.kResetSafeParameters, SparkMax.PersistMode.kPersistParameters )
 
-        # self.turn_motor.burnFlash()
-        # self.drive_motor.burnFlash()
+        encoder_config = CANcoderConfiguration()
+        # encoder_config.magnet_sensor.with_magnet_offset(abs_encoder_offset)
+        encoder_config.magnet_sensor.magnet_offset = -abs_encoder_offset
+        self.abs_turn_encoder.configurator.apply(encoder_config)
 
-        #drive/turn Position Queues?
+
+        #drive/turn Position Queues? (I think that was in MechAdv)
         
         #PID Controllers
-        self.drivePID = PIDController(self.drive_kP, 0.0, self.drive_kD)
-        self.turnPID = ProfiledPIDController(
-            self.turn_kP, 0.0, self.turn_kD,
-            TrapezoidProfile.Constraints(
-                self.kMaxVelocity,
-                self.kMaxAcceleration
-            )
-        )
+        # edit PID vals thru Sendable -> change here in code for persist
+        self.drivePID = PIDController(0.0, 0.0, 0.0)
+        self.turnPID = PIDController(4.3,0.0,0.0)
+        # self.turnPID = ProfiledPIDController(
+        #     0.0, 0.0, 0.0,
+        #     TrapezoidProfile.Constraints(
+        #         self.kMaxVelocity,
+        #         self.kMaxAcceleration
+        #     )
+        # )
         self.turnPID.enableContinuousInput(-pi,pi)
 
-        self.driveFF = SimpleMotorFeedforwardMeters(1, 3)#???
-        self.turnFF = SimpleMotorFeedforwardMeters(1, 0.5)#???
+        self.driveFF = SimpleMotorFeedforwardMeters(0.0, 2.8235)
+        # self.turnFF = SimpleMotorFeedforwardMeters(0, 0.0)
 
+        SmartDashboard.putData(f"{ssName}drivePID", self.drivePID)
+        SmartDashboard.putData(f"{ssName}turnPID", self.turnPID)
         #set dist per pulse on encoder
         # self.drive_motor_encoder.
         # hunt in tyler code, need to update neo from revolutions
 
+    ##Logging funcs
+    def getDriveVelocity(self) -> float:
+        # return self.drive_motor_encoder.getVelocity()
+        velocity = self.drive_motor_encoder.getVelocity() * self.k_drive_gear_ratio
+        velocity = rotationsPerMinuteToRadiansPerSecond(velocity)
+        return velocity * self.k_wheel_radius
+    
+    # def setDriveFF(self, val:float) -> None:
+    #     self.driveFF = SimpleMotorFeedforwardMeters(1, val)
+    
+    ##Functional
     def getState(self) -> SwerveModuleState:
         return SwerveModuleState(
             self.drive_motor_encoder.getVelocity(),
@@ -87,18 +107,20 @@ class SwerveModule:
         )
 
     def getAbsoluteEncoderPosition(self) -> float:
-        #currently uses get_absolute_position().value - offset, could use voltage measurement instead???
-        return self.abs_turn_encoder.get_absolute_position().value - self.abs_encoder_offset
+        return rotationsToRadians(self.abs_turn_encoder.get_absolute_position().value)# - self.abs_encoder_offset)
 
     def setDesiredState(self, desiredState:SwerveModuleState):
-        encoderRotation = Rotation2d(self.getAbsoluteEncoderPosition())
+        encoderRotation = Rotation2d((self.getAbsoluteEncoderPosition()))
 
         #create optimized desired state
         state = desiredState
         state.optimize(encoderRotation)
 
         #make it drive slow when it has to turn a lot
+        # SmartDashboard.putNumber("set velocity pre cos", state.speed)
         state.speed *= (state.angle - encoderRotation).cos()
+        SmartDashboard.putNumber(f"SwerveModule-{self.ssName} set velocity", state.speed)
+        SmartDashboard.putNumber(f"SwerveModule-{self.ssName} set angle", state.angle.radians())
 
         driveOutput = self.drivePID.calculate(
             self.drive_motor_encoder.getVelocity(), state.speed
@@ -109,9 +131,9 @@ class SwerveModule:
         turnOutput = self.turnPID.calculate(
             self.getAbsoluteEncoderPosition(), state.angle.radians()
         )
-        turnFeedForward = self.turnFF.calculate(self.turnPID.getSetpoint().velocity)
+        # turnFeedForward = self.turnFF.calculate(self.turnPID.getSetpoint().velocity)
 
         self.drive_motor.setVoltage(driveOutput + driveFeedForward)
-        self.turn_motor.setVoltage(turnOutput + turnFeedForward)
+        self.turn_motor.setVoltage(turnOutput)# + turnFeedForward)
 
         

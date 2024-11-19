@@ -22,13 +22,13 @@ class RobotContainer:
         ## Declare Subsystems
         #Drive
         swerve_modules = [
-            SwerveModule("FL", 7, 8, 18, 97.471 ),
-            SwerveModule("FR", 1, 2, 12, 5.361 ),
-            SwerveModule("BL", 5, 6, 16, 298.828 ),
-            SwerveModule("BR", 3, 4, 14, 60.557 )
+            SwerveModule("FL", 7, 8, 18, -0.235352 ),
+            SwerveModule("FR", 1, 2, 12, -0.486572 ),
+            SwerveModule("BL", 5, 6, 16, -0.673584 ),
+            SwerveModule("BR", 3, 4, 14, -0.338 )
         ]
-        gyro = W_Pigeon2( 9, 'rio')
-        self.drive = SwerveDrive( 'rio', swerve_modules, gyro )
+        gyro = W_Pigeon2( 9, 'canivore1')
+        self.drive = SwerveDrive( 'canivore1', swerve_modules, gyro )
 
         ## Commands
         # self.leftX = SampleCommand(self.m_subsys, self.m_driver1.getLeftX )
@@ -36,15 +36,15 @@ class RobotContainer:
 
         ## Autonomous Chooser
         self.m_autoChooser = SendableChooser()
-        self.m_autoChooser.setDefaultOption( "1 - None", cmd.none() )
+        # self.m_autoChooser.setDefaultOption( "1 - None", cmd.none() )
         SmartDashboard.putData( "Autonomous Mode", self.m_autoChooser )
 
         ## Default Commands
         self.drive.setDefaultCommand( DriveByStick(
             self.drive,
-            self.m_driver1.getLeftX,
             self.m_driver1.getLeftY,
-            lambda: ( self.m_driver1.getRightTriggerAxis() - self.m_driver1.getLeftTriggerAxis() )
+            self.m_driver1.getLeftX,
+            lambda: ( self.m_driver1.getLeftTriggerAxis() - self.m_driver1.getRightTriggerAxis() )
         ) )
 
         ## Put Data on SmartDashboard
