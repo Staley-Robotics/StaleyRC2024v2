@@ -5,6 +5,7 @@ from commands2 import Subsystem
 from wpilib import RobotState, SmartDashboard, Field2d
 from wpimath.geometry import Rotation2d, Translation2d, Pose2d, Pose3d
 from wpimath.kinematics import SwerveDrive4Kinematics, SwerveModulePosition, SwerveModuleState, SwerveDrive4Odometry, ChassisSpeeds
+from wpimath.estimator import SwerveDrive4PoseEstimator
 from ntcore import NetworkTable, NetworkTableInstance, _now
 from ntcore.util import ntproperty
 
@@ -22,6 +23,7 @@ class SwerveDrive(Subsystem):
     __gyro:Pigeon2 = None
     __kinematics:SwerveDrive4Kinematics = None
     __odometry:SwerveDrive4Odometry = None
+    __visionOdometry:SwerveDrive4PoseEstimator = None
     __logging:NetworkTable = None
 
     # Settings
@@ -52,6 +54,12 @@ class SwerveDrive(Subsystem):
         )
 
         self.__odometry = SwerveDrive4Odometry(
+            self.__kinematics,
+            self.__gyro.getRotation2d(),
+            self.__getModulePositions(),
+            Pose2d( Translation2d(0,0), Rotation2d(0) )
+        )
+        self.__visionOdometry = SwerveDrive4PoseEstimator(
             self.__kinematics,
             self.__gyro.getRotation2d(),
             self.__getModulePositions(),
@@ -89,9 +97,18 @@ class SwerveDrive(Subsystem):
             self.__gyro.getRotation2d(),
             self.__getModulePositions()
         )
+
+        # Update Vision Odometry
+        vPose = self.__visionOdometry.update(
+            self.__gyro.getRotation2d(),
+            self.__getModulePositions()
+        )
         
-        # Logging
+        # Dashboarding
         self.__field.setRobotPose( pose )
+        self.__field.getObject( "Vision" ).setPose( vPose )
+
+        # Logging
         self.__logging.putValue( "Gyro/yaw_d", self.__gyro.get_yaw().value )
         self.__logging.putValue( "Gyro/pitch_d", self.__gyro.get_pitch().value  )
         self.__logging.putValue( "Gyro/roll_d", self.__gyro.get_roll().value  )
