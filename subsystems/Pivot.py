@@ -3,7 +3,7 @@ import math
 from commands2 import PIDSubsystem
 
 from ntcore import NetworkTableInstance, NetworkTable
-from wpilib import SmartDashboard, RobotBase, Mechanism2d, Color8Bit, RobotController
+from wpilib import SmartDashboard, RobotBase, RobotState, Mechanism2d, Color8Bit, RobotController
 from wpimath.controller import PIDController, SimpleMotorFeedforwardRadians
 from wpimath.system.plant import DCMotor
 from wpimath.units import radiansToRotations, degrees, degreesToRotations, rotationsToDegrees
@@ -42,14 +42,13 @@ class Pivot(PIDSubsystem):
     __motor:TalonFX = None
     __encoder:CANcoder = None
     __logger:NetworkTable = None
-    c_offset = -0.2138 
 
     def __init__(self):
         # Motor
         motorCfg = TalonFXConfiguration()
         motorCfg.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
         motorCfg.motor_output.neutral_mode = NeutralModeValue.COAST
-        motorCfg.motor_output.duty_cycle_neutral_deadband = 0.02
+        motorCfg.motor_output.duty_cycle_neutral_deadband = 0.001
         self.__motor = TalonFX( 25, "canivore1" )
         self.__motor.configurator.apply( motorCfg )
         self.voltOut = VoltageOut(0, use_timesync=True)
@@ -101,6 +100,8 @@ class Pivot(PIDSubsystem):
         self.__logger.putNumber( "EncoderVelocity_rps", self.__encoder.get_velocity().value )
         
         # Run
+        if RobotState.isDisabled():
+            self.stop()
         super().periodic()
 
         # Visualization
@@ -125,12 +126,16 @@ class Pivot(PIDSubsystem):
         self.__motor.sim_state.add_rotor_position( velocity * 0.02 )
 
         # CANcoder
-        self.__encoder.sim_state.set_velocity( velocity * PivotConstants.kGearRatio )
-        self.__encoder.sim_state.add_position( velocity * PivotConstants.kGearRatio * 0.02 )
+        self.__encoder.sim_state.set_velocity( -velocity * PivotConstants.kGearRatio )
+        self.__encoder.sim_state.add_position( -velocity * PivotConstants.kGearRatio * 0.02 )
 
-    def setSetpoint(self, setpoint:degrees):
+    def stop(self) -> None:
+        self.setSetpoint( rotationsToDegrees( self.getMeasurement() ), True )
+
+    def setSetpoint(self, setpoint:degrees, overrideRange:bool=False):
         # Limits the specific range (Protects mechanism)
-        setpoint = min( max( setpoint, PivotPositions.MIN ), PivotPositions.MAX )
+        if not overrideRange:
+            setpoint = min( max( setpoint, PivotPositions.MIN ), PivotPositions.MAX )
         setpoint = degreesToRotations( setpoint )
         return super().setSetpoint(setpoint)
 
@@ -139,8 +144,7 @@ class Pivot(PIDSubsystem):
         feedforward = SimpleMotorFeedforwardRadians( 0, 0, 0 ).calculate( setpoint ) 
 
         # Sets the motor speed
-        print( output )
-        self.__motor.set_control( self.voltOut.with_output( output ) )
+        self.__motor.set_control( self.dutyOut.with_output( output ) )
 
     def getMeasurement(self) -> float:
         return self.__encoder.get_position().value

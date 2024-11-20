@@ -65,6 +65,8 @@ class Feeder(Subsystem):
         self.__logger.putBoolean( "SensorBottom", self.__bottomIrBeam.get() )
 
         # Run Subsystem: Set New State To Subsystem
+        if RobotState.isDisabled():
+            self.stop()
         self.run()
       
         # Logging: Write Post Operation Information

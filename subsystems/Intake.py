@@ -2,7 +2,7 @@ import statistics, typing, threading
 
 from commands2 import Subsystem, cmd, Command
 
-from wpilib import SmartDashboard, Mechanism2d, Color8Bit, RobotController, DigitalInput
+from wpilib import SmartDashboard, RobotState, Mechanism2d, Color8Bit, RobotController, DigitalInput
 from wpimath.system.plant import DCMotor
 from wpimath.units import rotationsToDegrees, radiansToRotations
 from ntcore import NetworkTable, NetworkTableInstance
@@ -74,6 +74,8 @@ class Intake(Subsystem):
         self.__logger.putBoolean( "Sensor", self.__irBeam.get() )
 
         # Run Subsystem: Set New State To Subsystem
+        if RobotState.isDisabled():
+            self.stop()
         self.run()
         
         # Logging: Write Post Operation Information

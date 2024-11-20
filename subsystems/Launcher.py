@@ -93,6 +93,8 @@ class Launcher(PIDSubsystem):
         self.__inputLogger.putNumber( "Right/MotorVelocity_rps", self.__rightMotor.get_velocity().value )
 
         # Run Subsystem: Set New State To Subsystem
+        if RobotState.isDisabled():
+            self.stop()
         super().periodic()
         
         # Output Logging
