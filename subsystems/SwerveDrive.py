@@ -38,10 +38,10 @@ class SwerveDrive(Subsystem):
         self.setName( "SwerveDrive" )
 
         self.__modules = [
-            SwerveModule( 0, 7, 8, 18, 97.471 ),
-            SwerveModule( 1, 1, 2, 12, 5.361 ),
-            SwerveModule( 2, 5, 6, 16, 298.828 ),
-            SwerveModule( 3, 3, 4, 14, 60.557 )
+            SwerveModule( 0, 7, 8, 18, -0.235352 ), # 97.471 ),
+            SwerveModule( 1, 1, 2, 12, -0.486572 ), #5.361 ),
+            SwerveModule( 2, 5, 6, 16, -0.673584 ), #298.828 ),
+            SwerveModule( 3, 3, 4, 14, -0.338 ) #60.557 )
         ]
 
         self.__gyro = Pigeon2( 9, "canivore1" )
