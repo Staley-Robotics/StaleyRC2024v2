@@ -1,6 +1,6 @@
 from commands2 import Subsystem, Command
 
-from wpilib import RobotState, DigitalInput, SmartDashboard
+from wpilib import RobotState, DigitalInput, SmartDashboard, RobotBase
 from wpimath.system.plant import DCMotor
 from wpimath.units import kSecondsPerMinute
 from ntcore import NetworkTable, NetworkTableInstance
@@ -36,11 +36,12 @@ class Feeder(Subsystem):
         self.__motorEncoder:SparkRelativeEncoder = self.__motor.getEncoder()
 
         # Simulation
-        self.__motorSim = SparkMaxSim( self.__motor, DCMotor.NEO(1) )
-        self.__motorSim.getAbsoluteEncoderSim().setPositionConversionFactor(1)
-        self.__motorSim.getAbsoluteEncoderSim().setVelocityConversionFactor(1)
-        self.__motorSim.getRelativeEncoderSim().setPositionConversionFactor(1)
-        self.__motorSim.getRelativeEncoderSim().setVelocityConversionFactor(1)
+        if RobotBase.isSimulation():
+            self.__motorSim = SparkMaxSim( self.__motor, DCMotor.NEO(1) )
+            self.__motorSim.getAbsoluteEncoderSim().setPositionConversionFactor(1)
+            self.__motorSim.getAbsoluteEncoderSim().setVelocityConversionFactor(1)
+            self.__motorSim.getRelativeEncoderSim().setPositionConversionFactor(1)
+            self.__motorSim.getRelativeEncoderSim().setVelocityConversionFactor(1)
         
         # IR Break Beams
         self.__bottomIrBeam:DigitalInput = DigitalInput(1)
