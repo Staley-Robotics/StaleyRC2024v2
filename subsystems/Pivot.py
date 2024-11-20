@@ -49,7 +49,7 @@ class Pivot(PIDSubsystem):
         motorCfg = TalonFXConfiguration()
         motorCfg.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
         motorCfg.motor_output.neutral_mode = NeutralModeValue.COAST
-        motorCfg.motor_output.duty_cycle_neutral_deadband = 0.001
+        motorCfg.motor_output.duty_cycle_neutral_deadband = 0.02
         self.__motor = TalonFX( 25, "canivore1" )
         self.__motor.configurator.apply( motorCfg )
         self.voltOut = VoltageOut(0, use_timesync=True)
@@ -58,7 +58,7 @@ class Pivot(PIDSubsystem):
         # Encoder
         encoderCfg = CANcoderConfiguration()
         encoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
-        encoderCfg.magnet_sensor.sensor_direction = SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
+        encoderCfg.magnet_sensor.sensor_direction = SensorDirectionValue.CLOCKWISE_POSITIVE
         if not RobotBase.isSimulation(): encoderCfg.magnet_sensor.magnet_offset = PivotConstants.kOffsetRotations
         self.__encoder = CANcoder( 26, "canivore1" )
         self.__encoder.configurator.apply( encoderCfg )
@@ -139,7 +139,8 @@ class Pivot(PIDSubsystem):
         feedforward = SimpleMotorFeedforwardRadians( 0, 0, 0 ).calculate( setpoint ) 
 
         # Sets the motor speed
-        self.__motor.set_control( self.dutyOut.with_output( output ) )
+        print( output )
+        self.__motor.set_control( self.voltOut.with_output( output ) )
 
     def getMeasurement(self) -> float:
         return self.__encoder.get_position().value
