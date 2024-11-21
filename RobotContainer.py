@@ -3,8 +3,8 @@ from commands2.button import CommandXboxController
 import commands2.cmd as cmd
 from wpilib import SendableChooser, SmartDashboard
 
-from commands.SampleCommand import SampleCommand
-from subsystems.SampleSubsystem import SampleSubsystem
+from commands import IndexerEJECT, IndexerHANDOFF, IndexerSTOP
+from subsystems.Indexer import Indexer
 
 class RobotContainer:
     # Variable Declaration
@@ -16,11 +16,14 @@ class RobotContainer:
         self.m_driver1 = CommandXboxController( 0 )
 
         # Declare Subsystems
-        self.m_subsys = SampleSubsystem( 0 )
+        self.m_Indexer = Indexer( 0 ) #idk the device id yay
 
         # Commands
-        self.leftX = SampleCommand(self.m_subsys, self.m_driver1.getLeftX )
-        self.rightX = SampleCommand(self.m_subsys, self.m_driver1.getRightX )
+        self.indexer_stop = IndexerSTOP.IndexerSTOP(self.m_Indexer)
+        self.indexer_eject = IndexerEJECT.IndexerEJECT(self.m_Indexer)
+        self.indexer_handoff = IndexerHANDOFF.IndexerHANDOFF(self.m_Indexer)
+        # self.leftX = SampleCommand(self.m_subsys, self.m_driver1.getLeftX )
+        # self.rightX = SampleCommand(self.m_subsys, self.m_driver1.getRightX )
 
         # Autonomous Chooser
         self.m_autoChooser = SendableChooser()
@@ -28,10 +31,12 @@ class RobotContainer:
         SmartDashboard.putData( "Autonomous Mode", self.m_autoChooser )
 
         # Default Commands
-        self.m_subsys.setDefaultCommand( self.leftX )
+        # self.m_Indexer.setDefaultCommand( self.leftX )
 
         # Driver Controller Button Binding
-        self.m_driver1.a().whileTrue( self.rightX )
+        self.m_driver1.a().whileTrue( self.indexer_stop ) # A ==> stop
+        self.m_driver1.x().whileTrue( self.indexer_eject ) # X ==> eject
+        self.m_driver1.b().whileTrue( self.indexer_handoff ) # B ==> handoff
 
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:

@@ -1,21 +1,21 @@
 import typing
 
 from commands2 import Command, Subsystem
-from subsystems.SampleSubsystem import SampleSubsystem
+from subsystems.Indexer import Indexer, IndexerSpeeds
 
-class SampleCommand(Command):
+class IndexerHANDOFF(Command):
     # Variable Declaration
-    m_subsystem:SampleSubsystem = None
+    m_subsystem:Indexer = None
     m_getValue:typing.Callable[[],float] = lambda: 0.0
     
     # Initialization
     def __init__( self,
                   mySubsystem:Subsystem,
-                  myValue: typing.Callable[[], float] = lambda: 0.0
                 ) -> None:
         # Command Attributes
-        self.m_subsystem:SampleSubsystem = mySubsystem
-        self.m_getValue = myValue
+        self.m_subsystem:Indexer = mySubsystem
+        self.speeds = IndexerSpeeds() # maybe put all commands into one file? probably not... idk
+        self.m_getValue = self.speeds.HANDOFF
         self.setName( "SampleCommand" )
         self.addRequirements( mySubsystem )
 
@@ -25,7 +25,8 @@ class SampleCommand(Command):
 
     # Periodic
     def execute(self) -> None:
-        self.m_subsystem.setSetpoint( self.m_getValue() )
+        self.m_subsystem.setSpeed( self.m_getValue )
+        self.m_subsystem.m_logging.putString('Indexer Status', 'HANDOFF')
 
     # On End
     def end(self, interrupted:bool) -> None:

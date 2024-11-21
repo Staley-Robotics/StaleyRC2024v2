@@ -25,10 +25,10 @@ class Indexer(Subsystem):
         self.m_speed = IndexerSpeeds.STOP
         
         # Motour init bananas
-        self.m_motor.setIdleMode(self.m_motor.IdleMode.kBrake)
+        # self.m_motor.setIdleMode(self.m_motor.IdleMode.kBrake)
+        self.m_motor.IdleMode(self.m_motor.IdleMode.kBrake)
 
-
-        self.m_logging = NetworkTableInstance.getDefault().getTable("/Logging/SampleSubsystem")
+        self.m_logging = NetworkTableInstance.getDefault().getTable("/Logging/Indexer")
 
     # Periodic Loop
     def periodic(self) -> None:
@@ -75,7 +75,7 @@ class Indexer(Subsystem):
         Note:
         speed must between between -1 and 1
         """
-        if speed <= 1 and speed >= 1:
+        if speed <= 1 and speed >= -1:
             self.m_speed = speed
         else:
             raise ValueError("Speed must be between -1 and 1... m_speed was not changed")

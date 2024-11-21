@@ -12,3 +12,7 @@ robotpy_version = "2025.0.0b1"
 robotpy_extras = [
     "commands2"
 ]
+
+requires = [
+    "robotpy-rev==2025.0.0b1"
+]
