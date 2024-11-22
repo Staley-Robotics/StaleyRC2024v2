@@ -45,9 +45,19 @@ class RobotContainer:
         cmdLaunchStop    = LauncherStop( sysLauncher )
 
         # Sequences
-        seqPickup = cmdIntakePickup.alongWith( cmdPivotHandoff ).andThen( cmdFeederReceive.alongWith( cmdIntakeHandoff ) )
+        seqPickupIntake = IntakePickup( sysIntake )
+        seqPickupPivot = PivotToPosition( sysPivot, PivotPositions.HANDOFF )
+        seqPickupFeeder = FeederHandoff( sysFeeder )
+        seqPickupIntakeHandoff = IntakeHandoff( sysIntake )
+        seqPickup = seqPickupIntake.andThen( seqPickupPivot ).andThen( seqPickupFeeder.alongWith( seqPickupIntakeHandoff ) )
+        seqPickup = seqPickup.onlyIf( lambda: not sysFeeder.hasSecuredNote() )
         seqPickup = seqPickup.withName( "PickupSequence" )
-        seqLaunch = cmdLaunchLong.andThen( cmdFeederLaunch ).andThen( cmdLaunchStop )
+
+        seqLaunchStart = LauncherStart( sysLauncher, LauncherOptions.LONG )
+        seqLaunchFeeder = FeederLaunch( sysFeeder )
+        seqLaunchStop = LauncherStop( sysLauncher )
+        seqLaunch = seqLaunchStart.andThen( seqLaunchFeeder ).andThen( cmd.waitSeconds( 0.25 ) ).andThen( seqLaunchStop )
+        seqLaunch = seqLaunch.onlyIf( lambda: sysFeeder.hasSecuredNote() )
         seqLaunch = seqLaunch.withName( "LaunchSequence" )
 
         # Special Command Handling
@@ -64,14 +74,15 @@ class RobotContainer:
         # Driver Controller Button Binding
         driver1.a().toggleOnTrue( cmdIntakePickup )
         driver1.b().toggleOnTrue( cmdIntakeHandoff )
-        driver1.x().and_( lambda: not sysFeeder.hasSecuredNote() ).toggleOnTrue( seqPickup )
-        driver1.y().and_( lambda: sysFeeder.hasSecuredNote() ).toggleOnTrue( seqLaunch )
+        driver1.x().toggleOnTrue( seqPickup )
+        driver1.y().toggleOnTrue( seqLaunch )
         
         # Dashboard Commands
         self.addDashboardCommands( "Intake",   [cmdIntakeHandoff, cmdIntakePickup, cmdIntakeEject] )
         self.addDashboardCommands( "Feeder",   [cmdFeederReceive, cmdFeederLaunch, cmdFeederEject, cmdFeederBalance] )
         self.addDashboardCommands( "Pivot",    [cmdPivotHigh, cmdPivotAmp, cmdPivotSpeaker, cmdPivotHandoff, cmdPivotToss, cmdPivotFlat, cmdPivotLow] )
         self.addDashboardCommands( "Launcher", [cmdLaunchLong, cmdLaunchToss, cmdLaunchAmp, cmdLaunchStop] )
+        self.addDashboardCommands( "Sequences", [seqPickup, seqLaunch] )
 
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:
