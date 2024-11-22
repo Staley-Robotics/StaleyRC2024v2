@@ -11,8 +11,10 @@ from wpimath.system.plant import DCMotor
 from wpimath.units import rotationsPerMinuteToRadiansPerSecond, rotationsToRadians, radiansToRotations, kSecondsPerMinute
 from ntcore import NetworkTable, NetworkTableInstance
 
-from rev import SparkMax, SparkRelativeEncoder, SparkMaxSim, SparkRelativeEncoderSim
+from rev import SparkMax, SparkRelativeEncoder, SparkMaxSim, SparkRelativeEncoderSim, SparkMaxConfig
 from phoenix6.hardware import CANcoder
+from phoenix6.configs import CANcoderConfiguration
+from phoenix6.signals.spn_enums import AbsoluteSensorRangeValue, SensorDirectionValue
 from phoenix6.sim import CANcoderSimState
 
 class SwerveModuleConstants:
@@ -57,18 +59,38 @@ class SwerveModule:
         self.moduleId = moduleId
         
         # Drive Motor
+        driveMotorCfg = SparkMaxConfig()
+        driveMotorCfg = driveMotorCfg.voltageCompensation( 12.0 )
+        driveMotorCfg = driveMotorCfg.setIdleMode( SparkMaxConfig.IdleMode.kCoast )
+        driveMotorCfg = driveMotorCfg.secondaryCurrentLimit( 40.0 )
+        driveMotorCfg = driveMotorCfg.inverted( True )
         self.__driveMotor = SparkMax( driveId, SparkMax.MotorType.kBrushless )
+        self.__driveMotor.configure( driveMotorCfg, SparkMax.ResetMode.kResetSafeParameters, SparkMax.PersistMode.kPersistParameters )
         self.__driveEncoder = self.__driveMotor.getEncoder()
         self.__drivePid = PIDController( SwerveModuleConstants.Drive.kP, SwerveModuleConstants.Drive.kI, SwerveModuleConstants.Drive.kD )
         self.__drivePid.setTolerance( 0.01 )
         self.__driveFF = SimpleMotorFeedforwardMeters( SwerveModuleConstants.Drive.kS, SwerveModuleConstants.Drive.kV )
 
         # Turn Motor
+        turnMotorCfg = SparkMaxConfig()
+        turnMotorCfg = turnMotorCfg.voltageCompensation( 12.0 )
+        turnMotorCfg = turnMotorCfg.setIdleMode( SparkMaxConfig.IdleMode.kCoast )
+        turnMotorCfg = turnMotorCfg.secondaryCurrentLimit( 20.0 )
+        turnMotorCfg = turnMotorCfg.inverted( True )
         self.__turnMotor = SparkMax( turnId, SparkMax.MotorType.kBrushless )
+        self.__turnMotor.configure( turnMotorCfg, SparkMax.ResetMode.kResetSafeParameters, SparkMax.PersistMode.kPersistParameters )
+        
         self.__turnMotorEncoder = self.__turnMotor.getEncoder()
+        
+        # Turn Encoder (CANcoder)
+        turnEncoderCfg = CANcoderConfiguration()
+        turnEncoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
+        turnEncoderCfg.magnet_sensor.sensor_direction = SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
+        if not RobotBase.isSimulation(): turnEncoderCfg.magnet_sensor.magnet_offset = encoderOffset
         self.__turnEncoder = CANcoder( encoderId, "canivore1" )
-        if not RobotBase.isSimulation():
-            self.__turnEncoder.set_position( self.__turnEncoder.get_absolute_position().value_as_double - encoderOffset )
+        self.__turnEncoder.configurator.apply( turnEncoderCfg )
+
+        # Turn PID
         self.__turnPid = PIDController( SwerveModuleConstants.Turn.kP, SwerveModuleConstants.Turn.kI, SwerveModuleConstants.Turn.kD )
         #self.__turnPid = ProfiledPIDControllerRadians( SwerveModuleConstants.Turn.kP, SwerveModuleConstants.Turn.kI, SwerveModuleConstants.Turn.kD, TrapezoidProfileRadians.Constraints( SwerveModuleConstants.Turn.kMaxAngularVelocity, SwerveModuleConstants.Turn.kMaxAngularAcceleration ) )
         self.__turnPid.enableContinuousInput( -math.pi, math.pi )
@@ -182,7 +204,7 @@ class SwerveModule:
         return metersPerSec
 
     def __getTurnEncoderRotation(self) -> Rotation2d:
-        return Rotation2d.fromRotations( self.__turnEncoder.get_position().value_as_double )
+        return Rotation2d.fromRotations( self.__turnEncoder.get_position(False).value_as_double )
 
     def __getTurnEncoderRadians(self) -> float:
-        return rotationsToRadians( self.__turnEncoder.get_position().value_as_double )
+        return rotationsToRadians( self.__turnEncoder.get_position(False).value_as_double )
