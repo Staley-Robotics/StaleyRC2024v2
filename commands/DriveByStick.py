@@ -6,6 +6,8 @@ from commands2 import Command, Subsystem
 
 from subsystems.SwerveDrive import SwerveDrive
 
+from ntcore.util import ntproperty
+
 # import ntcore.util as ntu
 # ntu.ntproperty
 # ntu._NtProperty
@@ -32,6 +34,8 @@ class DriveByStick(Command):
         self.addRequirements( swerveDrive )
 
         # Drive Setup
+        self.isFieldRelative = ntproperty('isFieldRelative', True, writeDefault=False, persistent=True)
+
         self.vX = velocityX
         self.vY = velocityY
         self.rO = rotation

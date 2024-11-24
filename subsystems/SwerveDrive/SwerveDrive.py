@@ -1,45 +1,45 @@
-from wpilib import RobotState
-import wpimath.geometry
-from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, ChassisSpeeds
+from wpilib import RobotState, getTime
+from wpimath.geometry import Translation2d, Pose2d
+from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, ChassisSpeeds, SwerveModulePosition
+from wpimath.estimator import SwerveDrive4PoseEstimator
 
 from commands2 import Subsystem
 
-# from phoenix6.hardware import Pigeon2
-from .W_Pigeon2 import W_Pigeon2
-
 from ntcore import NetworkTable, NetworkTableInstance
+# from ntcore.util import ntproperty
 
 from .SwerveModule import SwerveModule
-from util.Tunable import Tunable
+from .CustomPigeon2 import CustomPigeon2
+from .Vision import Vision
 
 class SwerveDrive(Subsystem):
     # Variable Declaration
-    m_system:int = None
+    m_system_id:int = None
     m_logging:NetworkTable = None
 
     k_maxSpeed:float = 3.0 # meters / sec
 
-    def __init__(self, sysId:int, modules:list[SwerveModule], gyro:W_Pigeon2) -> None:
+    def __init__(self, ssID:int, modules:list[SwerveModule], gyro:CustomPigeon2) -> None:
         ##Subsystem Inits
         self.setName("SwerveDrive")
 
         ##Logging Inits
-        self.m_system = sysId
+        self.m_system_id = ssID
         self.m_value = 0.0
         self.m_logging = NetworkTableInstance.getDefault().getTable("/Logging/SwerveDrive")
-
-        # self.test_tunable = Tunable("/Config/SwerveDrive", "test tunable", 0.0, lambda: self.m_logging.putNumber("does tunable work?", self.test_tunable.get()))
-
-        # self.m_logging.putNumber("/Config/SwervDrive/Override drive FF", 0.0)
+        self.poseTopic = self.m_logging.getStructTopic("robot pose odometry", Pose2d).publish()
 
         ##Swerve Inits
         #SwerveModule offsets from center, in meters
-        fl_offset = wpimath.geometry.Translation2d(0.2667,  0.2667)
-        fr_offset = wpimath.geometry.Translation2d(0.2667, -0.2667)
-        bl_offset = wpimath.geometry.Translation2d(-0.2667,  0.2667)
-        br_offset = wpimath.geometry.Translation2d(-0.2667, -0.2667)
+        fl_offset = Translation2d(0.2667,  0.2667)
+        fr_offset = Translation2d(0.2667, -0.2667)
+        bl_offset = Translation2d(-0.2667,  0.2667)
+        br_offset = Translation2d(-0.2667, -0.2667)
 
-        #low-level components
+        #Vision
+        self.vision = Vision()
+
+        #physical components
         self.modules = modules
         self.gyro = gyro
 
@@ -51,37 +51,41 @@ class SwerveDrive(Subsystem):
             br_offset
         )
 
-        #tracks field position, args are mostly starting position
+        #tracks field position, args are the assumed starting state of the robot
         self.odometry = SwerveDrive4Odometry(
             self.kinematics,
             self.gyro.get_rotation_2d(),
-            [
-                module.getPosition() for module in self.modules
-            ]
+            self.get_module_positions()
+        )
+        self.pose_estimator = SwerveDrive4PoseEstimator(
+            self.kinematics,
+            self.gyro.get_rotation_2d(),
+            self.get_module_positions(),
+            Pose2d(0,0,self.gyro.get_rotation_2d()),
+            (1.0,1.0,1.0),
+            (0,0,0)
+            #can include StdDevs for Pose
+            #can include StdDevs for Vision
         )
 
-        # self.gyro.configurator.refresh()
 
     def periodic(self) -> None:
-        ## Logging: Write Current Subsystem State
+        ## Logging
         self.m_logging.putNumber( "Gyro value", self.gyro.get_rotation_2d().degrees() )
-        for module in self.modules:
-            self.m_logging.putNumber( f"SwerveModule{module.ssName} velocity measured", module.getDriveVelocity() )
-            self.m_logging.putNumber( f"SwerveModule{module.ssName} angle measured", module.getAbsoluteEncoderPosition() )
-
-        # self.m_logging.putNumber( "does this tunable work?", self.)
-        # Update Tunables        
+        self.poseTopic.set(self.pose_estimator.getEstimatedPosition())
+        self.m_logging.putNumber( f"SwerveModule0 velocity measured", self.modules[0].getDriveVelocity() )
+        self.m_logging.putNumber( f"SwerveModule0 angle measured", self.modules[0].getAbsoluteEncoderPosition() )
+        self.m_logging.putNumber( f"SwerveModule1 velocity measured", self.modules[1].getDriveVelocity() )
+        self.m_logging.putNumber( f"SwerveModule1 angle measured", self.modules[1].getAbsoluteEncoderPosition() )
+        self.m_logging.putNumber( f"SwerveModule2 velocity measured", self.modules[2].getDriveVelocity() )
+        self.m_logging.putNumber( f"SwerveModule2 angle measured", self.modules[2].getAbsoluteEncoderPosition() )
+        self.m_logging.putNumber( f"SwerveModule3 velocity measured", self.modules[3].getDriveVelocity() )
+        self.m_logging.putNumber( f"SwerveModule3 angle measured", self.modules[3].getAbsoluteEncoderPosition() )
         
-
-        # Run Subsystem: Set New State To Subsystem
-        # if RobotState.isDisabled():
-        #     self.stop()
-        # else:
-        #     self.run()
         
-        # # Logging: Write Post Operation Information
-        # self.m_logging.putNumber( "Setpoint", self.getSetpoint() )
-        # self.m_logging.putNumber( "Measured", self.m_system )
+        self.updateOdometry()
+        self.updatePoseEstimator()
+        self.updateVisionData()
 
     def drive(self,
               xSpeed:float,
@@ -125,27 +129,24 @@ class SwerveDrive(Subsystem):
         """update field relative position of robot"""
         self.odometry.update(
             self.gyro.get_rotation_2d(),
-            [
-                module.getPosition() for module in self.modules
-            ]
+            self.get_module_positions()
         )
-
-    # # Run the Subsystem
-    # def run(self) -> None:
-    #     pass
-
-    # # Stop the Subsystem
-    # def stop(self) -> None:
-    #     pass
-
-    # # Set the Desired State Value
-    # def setSetpoint(self, value:float) -> None:
-    #     self.m_value = value
-
-    # # Get the Desired State Value
-    # def getSetpoint(self) -> float:
-    #     return self.m_value
+    def updatePoseEstimator(self) -> None:
+        self.pose_estimator.update(
+            self.gyro.get_rotation_2d(),
+            self.get_module_positions()
+        )
+    def updateVisionData(self) -> None:
+        data = self.vision.getLastUpdates()
+        for pose, latency in data:
+            self.pose_estimator.addVisionMeasurement(
+                pose,
+                getTime() - latency
+            )
     
-    # # Check if Subsystem is at the Desired State
-    # def atSetpoint(self) -> bool:
-    #     return False
+    ## Getters
+    def get_module_positions(self) -> tuple[SwerveModulePosition]:
+        return tuple(module.getPosition() for module in self.modules)
+    
+    def get_pose2d(self) -> Pose2d:
+        return self.pose_estimator.getEstimatedPosition()
