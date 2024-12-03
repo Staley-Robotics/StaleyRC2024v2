@@ -4,6 +4,7 @@ from commands2 import PIDSubsystem
 
 from ntcore import NetworkTableInstance, NetworkTable
 from wpilib import SmartDashboard, RobotBase, RobotState, Mechanism2d, Color8Bit, RobotController
+from wpilib.shuffleboard import Shuffleboard
 from wpimath.controller import PIDController, SimpleMotorFeedforwardRadians
 from wpimath.system.plant import DCMotor
 from wpimath.units import radiansToRotations, degrees, degreesToRotations, rotationsToDegrees
@@ -84,9 +85,9 @@ class Pivot(PIDSubsystem):
         self.mechPostTop = self.mechPost.appendLigament( "PivotPostTop", 5, 0, 2, Color8Bit( 0, 0, 255 ) )
         self.mechFront = self.mechPost.appendLigament( "PivotFront", 4, 0, 2, Color8Bit( 0, 255, 0) )
         self.mechBack = self.mechPost.appendLigament( "PivotBack", 6, 0, 2, Color8Bit( 255, 0, 0) )
-        SmartDashboard.putData( "Pivot", self )
-        SmartDashboard.putData( "PivotMech", self.mech )
-        SmartDashboard.putData( "PivotPid", self._controller )
+        Shuffleboard.getTab( "Pivot" ).add( "Pivot", self )
+        Shuffleboard.getTab( "Pivot" ).add( "PivotMech", self.mech )
+        Shuffleboard.getTab( "Pivot" ).add( "PivotPid", self._controller )
 
         self.__logger:NetworkTable = NetworkTableInstance.getDefault().getTable( "/Logging/Pivot" )
         self.__measured:NetworkTable = NetworkTableInstance.getDefault().getTable( "/RealOutputs/Pivot" )

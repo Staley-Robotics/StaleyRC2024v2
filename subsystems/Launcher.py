@@ -1,6 +1,7 @@
 from commands2 import Subsystem, PIDSubsystem
 
-from wpilib import RobotState, SmartDashboard
+from wpilib import RobotState
+from wpilib.shuffleboard import Shuffleboard
 from wpilib.simulation import DCMotorSim
 from wpimath.controller import PIDController, SimpleMotorFeedforwardRadians
 from wpimath.system.plant import DCMotor, LinearSystemId
@@ -77,8 +78,8 @@ class Launcher(PIDSubsystem):
         self.__outputLogger = NetworkTableInstance.getDefault().getTable("/RealOutputs/Launcher")
 
         # Dashboard
-        SmartDashboard.putData( "Launcher", self )
-        SmartDashboard.putData( "LauncherPid", self.getController() )
+        Shuffleboard.getTab( "Launcher" ).add( "Launcher", self )
+        Shuffleboard.getTab( "Launcher" ).add( "LauncherPid", self.getController() )
 
     # Periodic Loop
     def periodic(self) -> None:

@@ -3,6 +3,7 @@ import math
 
 from commands2 import Subsystem
 from wpilib import RobotState, SmartDashboard, Field2d, DriverStation
+from wpilib.shuffleboard import Shuffleboard
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d, Translation2d, Pose2d, Pose3d
 from wpimath.kinematics import SwerveDrive4Kinematics, SwerveModulePosition, SwerveModuleState, SwerveDrive4Odometry, ChassisSpeeds
@@ -76,7 +77,8 @@ class SwerveDrive(Subsystem):
 
         self.stop()
 
-        SmartDashboard.putData( "SwerveDrive", self )
+        # Dashboards
+        Shuffleboard.getTab( "SwerveDrive" ).add( "SwerveDrive", self )
         self.__field = Field2d()
         SmartDashboard.putData("Field", self.__field)
 

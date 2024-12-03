@@ -2,6 +2,7 @@ import typing
 import math
 
 from wpilib import RobotState, RobotBase
+from wpilib.shuffleboard import Shuffleboard
 from wpimath.controller import PIDController, ProfiledPIDController, ProfiledPIDControllerRadians, SimpleMotorFeedforwardMeters, SimpleMotorFeedforwardRadians
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
@@ -117,6 +118,10 @@ class SwerveModule:
 
         # Default Desired State
         self.__setpoint = SwerveModuleState(0, Rotation2d(0))
+
+        # Dashboards
+        Shuffleboard.getTab( "SwerveDrive" ).add( f"{moduleId}-DrivePid", self.__drivePid )
+        Shuffleboard.getTab( "SwerveDrive" ).add( f"{moduleId}-TurnPid", self.__turnPid )
 
         # Logging
         self.__logger = NetworkTableInstance.getDefault().getTable( f"/Logging/SwerveDrive/SwerveModule/{self.moduleId}" )

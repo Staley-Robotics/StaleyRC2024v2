@@ -1,6 +1,7 @@
 from commands2 import Subsystem, Command
 
-from wpilib import RobotState, DigitalInput, SmartDashboard, RobotBase
+from wpilib import RobotState, DigitalInput, RobotBase
+from wpilib.shuffleboard import Shuffleboard
 from wpimath.system.plant import DCMotor
 from wpimath.units import kSecondsPerMinute
 from ntcore import NetworkTable, NetworkTableInstance
@@ -52,7 +53,7 @@ class Feeder(Subsystem):
         self.__measured = NetworkTableInstance.getDefault().getTable("/RealOutputs/Feeder")
 
         # Dashboards
-        SmartDashboard.putData( "Feeder", self )
+        Shuffleboard.getTab( "Feeder" ).add( "Feeder", self )
 
     # Periodic Loop
     def periodic(self) -> None:

@@ -3,6 +3,7 @@ import statistics, typing, threading
 from commands2 import Subsystem, cmd, Command
 
 from wpilib import SmartDashboard, RobotState, Mechanism2d, Color8Bit, RobotController, DigitalInput
+from wpilib.shuffleboard import Shuffleboard
 from wpimath.system.plant import DCMotor
 from wpimath.units import rotationsToDegrees, radiansToRotations
 from ntcore import NetworkTable, NetworkTableInstance
@@ -56,7 +57,7 @@ class Intake(Subsystem):
         # self.l_topMotor = self.l_root.appendLigament( "TopMotor", 2, rotationsToDegrees( self.__topMotor.get_position().value ), 2, Color8Bit(0,255,0) )
 
         # Logging
-        SmartDashboard.putData( "Intake", self )
+        Shuffleboard.getTab( "Intake" ).add( "Intake", self )
         self.__logger = NetworkTableInstance.getDefault().getTable("/Logging/Intake")
         self.__outputs = NetworkTableInstance.getDefault().getTable("/RealOutputs/Intake")
 
