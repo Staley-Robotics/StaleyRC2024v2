@@ -3,6 +3,7 @@ from .Intake import *
 from .Launcher import *
 from .Pivot import *
 from .SwerveDrive import *
+from .Vision import *
 
 __all__ = [
     "Feeder",
@@ -13,5 +14,6 @@ __all__ = [
     "LauncherOptions",
     "Pivot",
     "PivotPositions",
-    "SwerveDrive"
+    "SwerveDrive",
+    "Vision"
 ]

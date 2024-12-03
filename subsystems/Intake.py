@@ -123,8 +123,7 @@ class Intake(Subsystem):
             self.__topMotor.setNeutralMode( mode, 0.1 )
             self.__bottomMotor.setNeutralMode( mode, 0.1 )
 
-        brakeThread = threading.Thread( target=lambda: changeBrake(brake) )
-        brakeThread.start()
+        threading.Thread( target=lambda: changeBrake(brake) ).start()
 
     # Get the IR Beam State
     def hasNote(self) -> bool:

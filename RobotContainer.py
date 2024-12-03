@@ -25,6 +25,12 @@ class RobotContainer:
         sysPivot = Pivot()
         sysLauncher = Launcher()
 
+        # Cameras
+        sysLimelight1 = Vision( "limelight-one", sysDriveTrain.getOdometry )
+        sysLimelight2 = Vision( "limelight-two", sysDriveTrain.getOdometry )
+        sysLimelight3 = Vision( "limelight-three", sysDriveTrain.getOdometry )
+        sysLimelight4 = Vision( "limelight-four", sysDriveTrain.getOdometry )
+
         # Commands
         cmdDriveCommand  = DriveByStick( sysDriveTrain, driver1.getLeftX, driver1.getLeftY, driver1.getRightY )
         cmdIntakeHandoff = IntakeHandoff( sysIntake )
@@ -62,6 +68,16 @@ class RobotContainer:
         seqLaunch = seqLaunch.onlyIf( lambda: sysFeeder.hasSecuredNote() )
         seqLaunch = seqLaunch.withName( "LaunchSequence" )
 
+        # Reset Gyro Command
+        cmdDriveResetGyro = cmd.runOnce( lambda: sysDriveTrain.resetGyro() ).ignoringDisable(True)
+        
+        # Vision Use Locked In Range Command
+        cmdVTLIR1 = cmd.runOnce( lambda: sysLimelight1.toggleUseLockedInRange() )
+        cmdVTLIR2 = cmd.runOnce( lambda: sysLimelight2.toggleUseLockedInRange() )
+        cmdVTLIR3 = cmd.runOnce( lambda: sysLimelight3.toggleUseLockedInRange() )
+        cmdVTLIR4 = cmd.runOnce( lambda: sysLimelight4.toggleUseLockedInRange() )
+        cmdVisionTLIR = cmdVTLIR1.alongWith( cmdVTLIR2 ).alongWith( cmdVTLIR3 ).alongWith( cmdVTLIR4 ).ignoringDisable(True)
+
         # Special Command Handling
         sysFeeder.addBalanceCommand( cmdFeederBalance )
 
@@ -81,6 +97,8 @@ class RobotContainer:
         driver1.b().toggleOnTrue( cmdIntakeHandoff )
         driver1.x().toggleOnTrue( seqPickup )
         driver1.y().toggleOnTrue( seqLaunch )
+        driver1.start().onTrue( cmdDriveResetGyro )
+        driver1.back().onTrue( cmdVisionTLIR )
         
         # Dashboard Commands
         self.addDashboardCommands( "Intake",   [cmdIntakeHandoff, cmdIntakePickup, cmdIntakeEject] )

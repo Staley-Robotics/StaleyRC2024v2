@@ -1,4 +1,4 @@
-import typing
+import typing, threading
 import math
 
 from commands2 import Subsystem
@@ -41,6 +41,7 @@ class SwerveDrive(Subsystem):
     __DriveMaxRotationPercent = ntproperty( "/Settings/Driver1/MaxRotationPercent", 1.0 )
 
     __setpoint:ChassisSpeeds = None
+    __odometryLock = False
 
     # Initialization
     def __init__(self) -> None:
@@ -62,18 +63,7 @@ class SwerveDrive(Subsystem):
             Translation2d( -0.2667, -0.2667 )
         )
 
-        self.__odometry = SwerveDrive4Odometry(
-            self.__kinematics,
-            self.__gyro.getRotation2d(),
-            self.__getModulePositions(),
-            Pose2d( Translation2d(0,0), Rotation2d(0) )
-        )
-        self.__visionOdometry = SwerveDrive4PoseEstimator(
-            self.__kinematics,
-            self.__gyro.getRotation2d(),
-            self.__getModulePositions(),
-            Pose2d( Translation2d(0,0), Rotation2d(0) )
-        )
+        self.__resetOdometry( Pose2d() )
 
         self.stop()
 
@@ -85,6 +75,7 @@ class SwerveDrive(Subsystem):
         self.__logging = NetworkTableInstance.getDefault().getTable("/Logging/SwerveDrive")
         self.__outGyro = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/Gyro",Rotation2d).publish()
         self.__outOdometry = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/Odometry",Pose2d).publish()
+        self.__outVisionOdometry = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/OdometryPlusVision",Pose2d).publish()
         self.__outChassisSpeedsActual = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/ChassisSpeeds/Actual", ChassisSpeeds).publish()
         self.__outChassisSpeedsTarget = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/ChassisSpeeds/Target", ChassisSpeeds).publish()
         self.__outSwerveModuleStateActual = NetworkTableInstance.getDefault().getStructArrayTopic("/RealOutputs/SwerveDrive/SwerveModuleStates/Actual", SwerveModuleState).publish()
@@ -124,8 +115,43 @@ class SwerveDrive(Subsystem):
     def shouldFlipPath(self) -> bool:
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
+    def resetGyro(self) -> None:
+        # Thread Safe Function
+        def resetGyroThread() -> None:
+            # Get The Current Pose Data
+            currentPose = self.__visionOdometry.getEstimatedPosition()
+            self.__gyro.set_yaw( currentPose.rotation().degrees(), 0.5 )
+            self.__resetOdometry( currentPose )
+            self.__odometryLock = False
+            print( "OdometryUnlocked!" )
+
+        # Odometry Lock
+        self.__odometryLock = True
+        print( "OdometryLock!" )
+        threading.Thread( target=lambda: resetGyroThread() ).start()
+
+    def __resetOdometry(self, pose:Pose2d) -> None:
+        self.__odometry = SwerveDrive4Odometry(
+            self.__kinematics,
+            self.__gyro.getRotation2d(),
+            self.__getModulePositions(),
+            pose
+        )
+        self.__visionOdometry = SwerveDrive4PoseEstimator(
+            self.__kinematics,
+            self.__gyro.getRotation2d(),
+            self.__getModulePositions(),
+            pose
+        )
+
     # Periodic Loop
     def periodic(self) -> None:
+        # Input Logging
+        self.__logging.putValue( "Gyro/yaw_d", self.__gyro.get_yaw().value )
+        self.__logging.putValue( "Gyro/pitch_d", self.__gyro.get_pitch().value  )
+        self.__logging.putValue( "Gyro/roll_d", self.__gyro.get_roll().value  )
+        self.__logging.putBoolean( "OdometryLock", self.__odometryLock )
+
         # Run Subsystem: Set New State To Subsystem
         if RobotState.isDisabled():
             self.stop()
@@ -137,16 +163,20 @@ class SwerveDrive(Subsystem):
         self.__modules[3].run()
         
         # Update Odometry
-        pose =  self.__odometry.update(
-            self.__gyro.getRotation2d(),
-            self.__getModulePositions()
-        )
+        pose = self.__odometry.getPose()
+        vPose = self.__visionOdometry.getEstimatedPosition()
 
-        # Update Vision Odometry
-        vPose = self.__visionOdometry.update(
-            self.__gyro.getRotation2d(),
-            self.__getModulePositions()
-        )
+        if not self.__odometryLock:
+            pose = self.__odometry.update(
+                self.__gyro.getRotation2d(),
+                self.__getModulePositions()
+            )
+
+            # Update Vision Odometry
+            vPose = self.__visionOdometry.update(
+                self.__gyro.getRotation2d(),
+                self.__getModulePositions()
+            )
         
         # Dashboarding
         match DriverStation.getAlliance():
@@ -158,15 +188,12 @@ class SwerveDrive(Subsystem):
                 rvPose = Pose2d( x=16.523 - vPose.X(), y=8.013 - vPose.Y(), angle= vPose.rotation().radians() - math.pi )
                 self.__field.setRobotPose( rPose )
                 self.__field.getObject( "Vision" ).setPose( rvPose )
-
-        # Logging
-        self.__logging.putValue( "Gyro/yaw_d", self.__gyro.get_yaw().value )
-        self.__logging.putValue( "Gyro/pitch_d", self.__gyro.get_pitch().value  )
-        self.__logging.putValue( "Gyro/roll_d", self.__gyro.get_roll().value  )
-        
+       
+        # Output Logging
         ntTime = _now()
         self.__outGyro.set( self.__gyro.getRotation2d(), ntTime )
         self.__outOdometry.set( pose, ntTime )
+        self.__outVisionOdometry.set( vPose, ntTime )
         self.__outSwerveModuleStateActual.set( self.__getModuleStates(), ntTime )
         self.__outSwerveModuleStateTarget.set( self.__setpointStates, ntTime )
         self.__outChassisSpeedsActual.set( self.getChassisSpeeds(), ntTime )
@@ -221,6 +248,11 @@ class SwerveDrive(Subsystem):
         self.__modules[1].setState(newStates[1])
         self.__modules[2].setState(newStates[2])
         self.__modules[3].setState(newStates[3])
+
+    def getOdometry(self) -> SwerveDrive4PoseEstimator:
+        if self.__odometryLock:
+            raise "Odometry Lock In Place" 
+        return self.__visionOdometry
 
     def __getModulePositions(self) -> typing.Tuple[ SwerveModulePosition, SwerveModulePosition, SwerveModulePosition, SwerveModulePosition]:
         return [
