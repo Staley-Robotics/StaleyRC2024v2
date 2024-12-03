@@ -1,8 +1,10 @@
-from commands2 import Command
+from commands2 import Command, ConditionalCommand, WrapperCommand
 from commands2.button import CommandXboxController, Trigger
 import commands2.cmd as cmd
 from wpilib import SendableChooser, SmartDashboard
 from wpilib.shuffleboard import Shuffleboard
+
+from pathplannerlib.auto import AutoBuilder, NamedCommands
 
 from commands import *
 from subsystems import *
@@ -26,7 +28,7 @@ class RobotContainer:
         # Commands
         cmdDriveCommand  = DriveByStick( sysDriveTrain, driver1.getLeftX, driver1.getLeftY, driver1.getRightY )
         cmdIntakeHandoff = IntakeHandoff( sysIntake )
-        cmdIntakePickup  = IntakePickup( sysIntake )
+        cmdIntakePickup  = IntakePickup( sysIntake ) #.onlyIf( lambda: not sysFeeder.hasSecuredNote() ).withName( "IntakePickup" )
         cmdIntakeEject   = IntakeEject( sysIntake )
         cmdFeederReceive = FeederHandoff( sysFeeder )
         cmdFeederLaunch  = FeederLaunch( sysFeeder )
@@ -63,10 +65,13 @@ class RobotContainer:
         # Special Command Handling
         sysFeeder.addBalanceCommand( cmdFeederBalance )
 
+        # PathPlanner Register Named Commands
+        NamedCommands.registerCommand('Pickup', seqPickup )
+        NamedCommands.registerCommand('LaunchSpeaker', seqLaunch )
+
         # Autonomous Chooser
-        self.__autoChooser = SendableChooser()
-        self.__autoChooser.setDefaultOption( "1 - None", cmd.none() )
-        SmartDashboard.putData( "Autonomous Mode", self.__autoChooser )
+        self.__autoChooser = AutoBuilder.buildAutoChooser()
+        SmartDashboard.putData( "Auto Chooser", self.__autoChooser )
 
         # Default Commands
         sysDriveTrain.setDefaultCommand( cmdDriveCommand )
@@ -87,13 +92,11 @@ class RobotContainer:
     # Get Autonomous Command
     def getAutonomousCommand(self) -> Command:
         chooserValue = self.__autoChooser.getSelected()
-        if type(chooserValue) == Command:
-            return chooserValue
-        else:
-            return cmd.none()
+        return chooserValue if isinstance( chooserValue, Command ) else cmd.none()
         
     # Publish Commands To Dashboards
     def addDashboardCommands( self, tabName:str, dashboardCommands:list[Command] ):
         tab = Shuffleboard.getTab( tabName )
         for i in range(len(dashboardCommands)):
+            name = dashboardCommands[i].getName() if dashboardCommands[i].getName() is not None else "CustomCommand"
             tab.add( dashboardCommands[i].getName(), dashboardCommands[i] )

@@ -2,18 +2,26 @@ import typing
 import math
 
 from commands2 import Subsystem
-from wpilib import RobotState, SmartDashboard, Field2d
+from wpilib import RobotState, SmartDashboard, Field2d, DriverStation
+from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d, Translation2d, Pose2d, Pose3d
 from wpimath.kinematics import SwerveDrive4Kinematics, SwerveModulePosition, SwerveModuleState, SwerveDrive4Odometry, ChassisSpeeds
-from wpimath.estimator import SwerveDrive4PoseEstimator
+from wpimath.system.plant import DCMotor
+from wpimath.units import lbsToKilograms
+
 from ntcore import NetworkTable, NetworkTableInstance, _now
 from ntcore.util import ntproperty
 
 from phoenix6.hardware import Pigeon2
 
-from subsystems.SwerveModule import SwerveModule
+from pathplannerlib.auto import AutoBuilder
+from pathplannerlib.controller import PPHolonomicDriveController
+from pathplannerlib.config import RobotConfig, PIDConstants, ModuleConfig
+
+from subsystems.SwerveModule import SwerveModule, SwerveModuleConstants
 
 class SwerveDriveConstants:
+    kWeightLbs = 120.0
     kMaxSpeed = 4.4
     kRotationSpeed = math.pi
 
@@ -79,6 +87,40 @@ class SwerveDrive(Subsystem):
         self.__outChassisSpeedsTarget = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/ChassisSpeeds/Target", ChassisSpeeds).publish()
         self.__outSwerveModuleStateActual = NetworkTableInstance.getDefault().getStructArrayTopic("/RealOutputs/SwerveDrive/SwerveModuleStates/Actual", SwerveModuleState).publish()
         self.__outSwerveModuleStateTarget = NetworkTableInstance.getDefault().getStructArrayTopic("/RealOutputs/SwerveDrive/SwerveModuleStates/Target", SwerveModuleState).publish()
+       
+        # Path Planner
+        #config = RobotConfig.fromGUISettings()
+        moduleConfig = ModuleConfig(
+            wheelRadiusMeters = SwerveModuleConstants.Drive.kWheelRadius,
+            maxDriveVelocityMPS = SwerveDriveConstants.kMaxSpeed,
+            wheelCOF = 0.0,
+            driveMotor = DCMotor.NEO(1),
+            driveCurrentLimit = 40.0,
+            numMotors = 1
+        )
+        robotConfig = RobotConfig(
+            massKG = lbsToKilograms( SwerveDriveConstants.kWeightLbs ),
+            MOI = 0.0,
+            moduleConfig = moduleConfig,
+            moduleOffsets = self.__kinematics.getModules(),
+            trackwidthMeters = None
+        )
+        AutoBuilder.configure(
+            pose_supplier = self.__odometry.getPose,
+            reset_pose = self.__odometry.resetPose,
+            robot_relative_speeds_supplier = self.getChassisSpeeds,
+            output = lambda speeds, feedforwards: self.runChassisSpeeds(speeds),
+            controller = PPHolonomicDriveController(
+                PIDConstants(5.0, 0.0, 0.0),
+                PIDConstants(5.0, 0.0, 0.0)
+            ),
+            robot_config = robotConfig,
+            should_flip_path = self.shouldFlipPath,
+            drive_subsystem = self
+        )
+
+    def shouldFlipPath(self) -> bool:
+        return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     # Periodic Loop
     def periodic(self) -> None:
