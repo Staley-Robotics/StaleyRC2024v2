@@ -18,42 +18,38 @@ class VisionConstants:
 
 class Vision(Subsystem):
     def __init__(self, name:str, swerveOdometry:typing.Callable[[], SwerveDrive4PoseEstimator]):
-        self.offline = ntproperty( f"Settings/Vision/{name}/Offline", False )
+        self.__offline = ntproperty( f"Settings/Vision/{name}/Offline", False )
 
-        self.name = name
-        self.swerveOdometry = swerveOdometry
-        self.useLockedInRange:bool = False
+        self.__getOdometryFromSwerve = swerveOdometry
+        self.__useLockedInRange:bool = False
 
-        self.wpiblue:DoubleArraySubscriber = NetworkTableInstance.getDefault().getTable( name ).getDoubleArrayTopic("botpose_wpiblue").subscribe([0.0])
-        self.wpired:DoubleArraySubscriber = NetworkTableInstance.getDefault().getTable( name ).getDoubleArrayTopic("botpose_wpired").subscribe([0.0])
-
-        self.blueQueue = []
-        self.redQueue = []
+        self.__wpiblue:DoubleArraySubscriber = NetworkTableInstance.getDefault().getTable( name ).getDoubleArrayTopic("botpose_wpiblue").subscribe([0.0])
+        self.__wpired:DoubleArraySubscriber = NetworkTableInstance.getDefault().getTable( name ).getDoubleArrayTopic("botpose_wpired").subscribe([0.0])
 
     def periodic(self):
         # Offline Mode
-        if self.offline:
+        if self.__offline:
             # Dump Queue
-            self.wpiblue.readQueue()
-            self.wpired.readQueue()
+            self.__wpiblue.readQueue()
+            self.__wpired.readQueue()
             return
 
         # Obtain Queue Data
-        self.blueQueue = self.processQueue( self.wpiblue.readQueue() )
-        self.redQueue = self.processQueue( self.wpired.readQueue() )
+        blueQueue = self.processQueue( self.__wpiblue.readQueue() )
+        redQueue = self.processQueue( self.__wpired.readQueue() )
 
         # Publish Queue Data to 
         queue = []
         match DriverStation.getAlliance():
             case DriverStation.Alliance.kBlue:
-                queue = self.blueQueue
+                queue = blueQueue
             case DriverStation.Alliance.kRed:
-                queue = self.redQueue
+                queue = redQueue
 
         for y in range(len(queue)):
             try:
                 # For Vision Accuracy, if enabled
-                if self.useLockedInRange:
+                if self.__useLockedInRange:
                     currentPosition = self.__getOdometry().getEstimatedPosition().translation()
                     visionPosition = queue[y]['pose2d'].translation()
                     distance = currentPosition.distance( visionPosition )
@@ -106,12 +102,15 @@ class Vision(Subsystem):
         return returnQueue
 
     def __getOdometry(self) -> SwerveDrive4PoseEstimator:
-        return self.swerveOdometry()
+        return self.__getOdometryFromSwerve()
     
     def toggleUseLockedInRange(self) -> None:
-        self.useLockedInRange = not self.useLockedInRange
+        self.__useLockedInRange = not self.__useLockedInRange
 
     def setUseLockedInRange(self, value:bool) -> None:
-        self.useLockedInRange = value
+        self.__useLockedInRange = value
+
+    def getUseLockedInRange(self) -> bool:
+        return self.__useLockedInRange
     
 
