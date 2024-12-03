@@ -11,7 +11,7 @@ from wpimath.units import radiansToRotations, degrees, degreesToRotations, rotat
 from phoenix6.hardware import TalonFX, CANcoder
 from phoenix6.controls import VoltageOut, DutyCycleOut
 from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
-from phoenix6.signals.spn_enums import InvertedValue, NeutralModeValue, AbsoluteSensorRangeValue, SensorDirectionValue
+from phoenix6.signals.spn_enums import InvertedValue, NeutralModeValue, SensorDirectionValue #, AbsoluteSensorRangeValue
 
 class PivotPositions:
     MAX = 55.041
@@ -56,7 +56,8 @@ class Pivot(PIDSubsystem):
                 
         # Encoder
         encoderCfg = CANcoderConfiguration()
-        encoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
+        #encoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
+        encoderCfg.magnet_sensor.absolute_sensor_discontinuity_point = 0.5
         encoderCfg.magnet_sensor.sensor_direction = SensorDirectionValue.CLOCKWISE_POSITIVE
         if not RobotBase.isSimulation(): encoderCfg.magnet_sensor.magnet_offset = PivotConstants.kOffsetRotations
         self.__encoder = CANcoder( 26, "canivore1" )

@@ -14,7 +14,7 @@ from ntcore import NetworkTable, NetworkTableInstance
 from rev import SparkMax, SparkRelativeEncoder, SparkMaxSim, SparkRelativeEncoderSim, SparkMaxConfig
 from phoenix6.hardware import CANcoder
 from phoenix6.configs import CANcoderConfiguration
-from phoenix6.signals.spn_enums import AbsoluteSensorRangeValue, SensorDirectionValue
+from phoenix6.signals.spn_enums import SensorDirectionValue #, AbsoluteSensorRangeValue
 from phoenix6.sim import CANcoderSimState
 
 class SwerveModuleConstants:
@@ -84,7 +84,8 @@ class SwerveModule:
         
         # Turn Encoder (CANcoder)
         turnEncoderCfg = CANcoderConfiguration()
-        turnEncoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
+        #turnEncoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
+        turnEncoderCfg.magnet_sensor.absolute_sensor_discontinuity_point = 0.5
         turnEncoderCfg.magnet_sensor.sensor_direction = SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
         if not RobotBase.isSimulation(): turnEncoderCfg.magnet_sensor.magnet_offset = encoderOffset
         self.__turnEncoder = CANcoder( encoderId, "canivore1" )
