@@ -51,20 +51,24 @@ class Vision(Subsystem):
                 queue = self.redQueue
 
         for y in range(len(queue)):
-            # For Vision Accuracy, if enabled
-            if self.useLockedInRange:
-                currentPosition = self.__getOdometry().getEstimatedPosition().translation()
-                visionPosition = queue[y]['pose2d'].translation()
-                distance = currentPosition.distance( visionPosition )
-                if distance > VisionConstants.LockedInRange:
-                    continue
+            try:
+                # For Vision Accuracy, if enabled
+                if self.useLockedInRange:
+                    currentPosition = self.__getOdometry().getEstimatedPosition().translation()
+                    visionPosition = queue[y]['pose2d'].translation()
+                    distance = currentPosition.distance( visionPosition )
+                    if distance > VisionConstants.LockedInRange:
+                        continue
 
-            # Update Odometry
-            self.__getOdometry().addVisionMeasurement(
-                queue[y]['pose2d'],
-                queue[y]['poseTimestamp'],
-                [ VisionConstants.StdDevX, VisionConstants.StdDevY, VisionConstants.StdDevR ]
-            )
+                # Update Odometry
+                self.__getOdometry().addVisionMeasurement(
+                    queue[y]['pose2d'],
+                    queue[y]['poseTimestamp'],
+                    [ VisionConstants.StdDevX, VisionConstants.StdDevY, VisionConstants.StdDevR ]
+                )
+            except:
+                # Odometry Lock in Place Ignore Command
+                pass
 
     def processQueue(self, queue:list[TimestampedDoubleArray]) -> list:
         returnQueue = []
