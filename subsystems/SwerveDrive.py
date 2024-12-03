@@ -5,7 +5,7 @@ from commands2 import Subsystem
 from wpilib import RobotState, SmartDashboard, Field2d, DriverStation
 from wpilib.shuffleboard import Shuffleboard
 from wpimath.estimator import SwerveDrive4PoseEstimator
-from wpimath.geometry import Rotation2d, Translation2d, Pose2d, Pose3d
+from wpimath.geometry import Rotation2d, Translation2d, Pose2d, Pose3d, Transform2d
 from wpimath.kinematics import SwerveDrive4Kinematics, SwerveModulePosition, SwerveModuleState, SwerveDrive4Odometry, ChassisSpeeds
 from wpimath.system.plant import DCMotor
 from wpimath.units import lbsToKilograms
@@ -149,8 +149,15 @@ class SwerveDrive(Subsystem):
         )
         
         # Dashboarding
-        self.__field.setRobotPose( pose )
-        self.__field.getObject( "Vision" ).setPose( vPose )
+        match DriverStation.getAlliance():
+            case DriverStation.Alliance.kBlue:
+                self.__field.setRobotPose( pose )
+                self.__field.getObject( "Vision" ).setPose( vPose )
+            case DriverStation.Alliance.kRed:
+                rPose = Pose2d( x=16.523 - pose.X(), y=8.013 - pose.Y(), angle= pose.rotation().radians() - math.pi )
+                rvPose = Pose2d( x=16.523 - vPose.X(), y=8.013 - vPose.Y(), angle= vPose.rotation().radians() - math.pi )
+                self.__field.setRobotPose( rPose )
+                self.__field.getObject( "Vision" ).setPose( rvPose )
 
         # Logging
         self.__logging.putValue( "Gyro/yaw_d", self.__gyro.get_yaw().value )
