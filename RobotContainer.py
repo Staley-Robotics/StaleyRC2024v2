@@ -16,7 +16,7 @@ class RobotContainer:
         self.m_driver1 = CommandXboxController( 0 )
 
         # Declare Subsystems
-        self.m_Indexer = Indexer( 0 ) #idk the device id yay
+        self.m_Indexer = Indexer( 22 ) #idk the device id yay
 
         # Commands
         self.indexer_stop = IndexerSTOP.IndexerSTOP(self.m_Indexer)

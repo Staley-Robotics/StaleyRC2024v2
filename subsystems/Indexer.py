@@ -6,9 +6,9 @@ from rev import SparkMax
 class IndexerSpeeds:
     #TODO PROBABLY NEED TO CHANGE THIS
 
-    EJECT:float = 1.0
+    EJECT:float = 0.5
     STOP:float = 0.0
-    HANDOFF:float = 0.5
+    HANDOFF:float = 0.35
 
 class Indexer(Subsystem):
     # Variable Declaration
@@ -21,12 +21,12 @@ class Indexer(Subsystem):
     def __init__(self, device_id:int) -> None:
         # make motour and make no move
         self.m_deviceId = device_id
-        self.m_motor= SparkMax( self.m_deviceId, SparkMax.MotorType.kBrushless)
+        self.m_motor = SparkMax( self.m_deviceId, SparkMax.MotorType.kBrushless)
         self.m_speed = IndexerSpeeds.STOP
         
         # Motour init bananas
         # self.m_motor.setIdleMode(self.m_motor.IdleMode.kBrake)
-        self.m_motor.IdleMode(self.m_motor.IdleMode.kBrake)
+        #self.m_motor.IdleMode(self.m_motor.IdleMode.kBrake)
 
         self.m_logging = NetworkTableInstance.getDefault().getTable("/Logging/Indexer")
 
@@ -65,7 +65,7 @@ class Indexer(Subsystem):
 
     # Stop Indexer
     def stop(self) -> None:
-        self.m_motor.set(IndexerSpeeds.STOP)
+        self.m_speed = IndexerSpeeds.STOP
 
     # Set the Desired State Value
     def setSpeed(self, speed:float) -> None:
