@@ -4,4 +4,4 @@ from wpimath.geometry import Rotation2d
 
 class CustomPigeon2(Pigeon2):
     def get_rotation_2d(self):
-        return Rotation2d().fromDegrees(self.get_yaw().value)
+        return self.getRotation2d()

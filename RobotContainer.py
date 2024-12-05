@@ -8,6 +8,8 @@ from commands2 import Command
 from commands2.button import CommandXboxController
 import commands2.cmd as cmd
 
+from rev import SparkMax
+
 from commands.DriveByStick import DriveByStick
 from subsystems.SwerveDrive.SwerveDrive import SwerveDrive
 from subsystems.SwerveDrive.SwerveModule import SwerveModule
@@ -32,6 +34,7 @@ class RobotContainer:
         gyro = CustomPigeon2( 9, 'canivore1')
         self.drive = SwerveDrive( 'canivore1', swerve_modules, gyro )
 
+        self.test = SparkMax(22, SparkMax.MotorType.kBrushless)
         ## Commands
 
 
@@ -50,9 +53,10 @@ class RobotContainer:
 
         ## Put Data on SmartDashboard
         SmartDashboard.putData( self.drive )
-        SmartDashboard.putData( self.drive.getDefaultCommand() )
+        # SmartDashboard.putData( self.drive.getDefaultCommand() )
 
         ## Controls
+        self.m_driver1.start().onTrue(cmd.runOnce(self.drive.sync_gyro))
         # self.m_driver1.a().whileTrue( self.rightX )
 
     def getAutonomousCommand(self) -> Command:

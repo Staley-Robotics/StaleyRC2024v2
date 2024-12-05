@@ -6,7 +6,7 @@ from wpimath.estimator import SwerveDrive4PoseEstimator
 from commands2 import Subsystem
 
 from ntcore import NetworkTable, NetworkTableInstance
-# from ntcore.util import ntproperty
+from ntcore.util import ntproperty
 
 from .SwerveModule import SwerveModule
 from .CustomPigeon2 import CustomPigeon2
@@ -27,7 +27,10 @@ class SwerveDrive(Subsystem):
         self.m_system_id = ssID
         self.m_value = 0.0
         self.m_logging = NetworkTableInstance.getDefault().getTable("/Logging/SwerveDrive")
-        self.poseTopic = self.m_logging.getStructTopic("robot pose odometry", Pose2d).publish()
+        self.poseTopic = self.m_logging.getStructTopic("robot pose vision", Pose2d).publish()
+        self.odometryTopic = self.m_logging.getStructTopic("robot pose odometry", Pose2d).publish()
+
+        self.vision_enable = ntproperty('Vision Enabled', True, persistent=True)
 
         ##Swerve Inits
         #SwerveModule offsets from center, in meters
@@ -71,8 +74,9 @@ class SwerveDrive(Subsystem):
 
     def periodic(self) -> None:
         ## Logging
-        self.m_logging.putNumber( "Gyro value", self.gyro.get_rotation_2d().degrees() )
+        self.m_logging.putNumber( "Gyro value", self.gyro.get_rotation_2d().degrees())
         self.poseTopic.set(self.pose_estimator.getEstimatedPosition())
+        self.odometryTopic.set(self.odometry.getPose())
         self.m_logging.putNumber( f"SwerveModule0 velocity measured", self.modules[0].getDriveVelocity() )
         self.m_logging.putNumber( f"SwerveModule0 angle measured", self.modules[0].getAbsoluteEncoderPosition() )
         self.m_logging.putNumber( f"SwerveModule1 velocity measured", self.modules[1].getDriveVelocity() )
@@ -85,7 +89,8 @@ class SwerveDrive(Subsystem):
         
         self.updateOdometry()
         self.updatePoseEstimator()
-        self.updateVisionData()
+        if self.vision_enable:
+            self.updateVisionData()
 
     def drive(self,
               xSpeed:float,
@@ -137,16 +142,19 @@ class SwerveDrive(Subsystem):
             self.get_module_positions()
         )
     def updateVisionData(self) -> None:
-        data = self.vision.getLastUpdates()
+        data = self.vision.getVisionData()
         for pose, latency in data:
             self.pose_estimator.addVisionMeasurement(
                 pose,
                 getTime() - latency
             )
     
+    def sync_gyro(self) -> None:
+        self.gyro.set_yaw(self.pose_estimator.getEstimatedPosition().rotation().degrees())
+    
     ## Getters
     def get_module_positions(self) -> tuple[SwerveModulePosition]:
         return tuple(module.getPosition() for module in self.modules)
     
-    def get_pose2d(self) -> Pose2d:
+    def getPose(self) -> Pose2d:
         return self.pose_estimator.getEstimatedPosition()

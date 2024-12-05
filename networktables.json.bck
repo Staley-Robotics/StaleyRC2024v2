@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "name": "isFieldRelative",
+    "type": "boolean",
+    "value": true,
+    "properties": {
+      "persistent": true
+    }
+  }
+]

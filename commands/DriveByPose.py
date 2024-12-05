@@ -1,0 +1,84 @@
+from typing import Callable
+
+from wpimath import applyDeadband
+from wpimath.controller import HolonomicDriveController, PIDController, ProfiledPIDControllerRadians
+from wpimath.trajectory import TrapezoidProfileRadians
+from wpimath.kinematics import ChassisSpeeds
+
+from commands2 import Command, Subsystem
+
+from subsystems.SwerveDrive import SwerveDrive
+
+from ntcore.util import ntproperty
+
+# import ntcore.util as ntu
+# ntu.ntproperty
+# ntu._NtProperty
+
+class DriveByStick(Command):
+    # Variable Declaration
+    m_subsystem:SwerveDrive = None
+    vX:Callable[[],float] = lambda: 0.0
+    vY:Callable[[],float] = lambda: 0.0
+    rO:Callable[[],float] = lambda: 0.0
+
+    controller_deadband = 0.04
+    
+    # Initialization
+    def __init__( self,
+                 swerveDrive:SwerveDrive,
+                 velocityX:Callable,
+                 velocityY:Callable,
+                 rotation:Callable
+                 ) -> None:
+        # Command Setup
+        self.drive:SwerveDrive = swerveDrive
+        self.setName( "DriveByStick" )
+        self.addRequirements( swerveDrive )
+
+        # Drive Setup
+        self.isFieldRelative = ntproperty('isFieldRelative', True, writeDefault=False, persistent=True)
+
+        self.vX = velocityX
+        self.vY = velocityY
+        self.rO = rotation
+
+        self.holonomic_controller = HolonomicDriveController(
+            PIDController(0.0,0.0,0.0), # x pos
+            PIDController(0.0,0.0,0.0), # y pos
+            ProfiledPIDControllerRadians( # rotation angle
+                0.0,
+                0.0,
+                0.0,
+                TrapezoidProfileRadians.Constraints(3.5, )
+            )
+        )
+
+
+    # On Start
+    def initialize(self) -> None:
+        pass
+
+    # Periodic
+    def execute(self) -> None:
+        xSpeed = applyDeadband(self.vX(), self.controller_deadband) * self.drive.k_maxSpeed
+        ySpeed = applyDeadband(self.vY(), self.controller_deadband) * self.drive.k_maxSpeed
+        rotSpeed = applyDeadband(self.rO(), self.controller_deadband) * self.drive.k_maxSpeed
+
+        goal_speeds:ChassisSpeeds = self.holonomic_controller.calculate(self.drive.getPose(), )
+
+        
+
+        self.drive.drive(goal_speeds.vx, goal_speeds.vy, goal_speeds.omega, True)
+
+    # On End
+    def end(self, interrupted:bool) -> None:
+        pass
+
+    # Is Finished
+    def isFinished(self) -> bool:
+        return False
+
+    # Run When Disabled
+    def runsWhenDisabled(self) -> bool:
+        return False

@@ -44,11 +44,12 @@ class SwerveModule:
 
         #Things to config probably:
         # change CAN timeout for cofigurating
-        # run multiple times to ensure settings
         # current limiting & Voltage Compensation
         # set motor encoder positions, measurment periods, & depths
 
         drive_config = SparkMaxConfig().setIdleMode( SparkMaxConfig.IdleMode.kBrake )
+        drive_config.encoder.positionConversionFactor(2 * pi * self.k_drive_gear_ratio * self.k_wheel_radius)
+        self.drive_motor.getEncoder()
         self.drive_motor.configure( drive_config, SparkMax.ResetMode.kResetSafeParameters, SparkMax.PersistMode.kPersistParameters )
         turn_config = SparkMaxConfig().inverted(self.turn_motor_inverted)
         self.turn_motor.configure( turn_config, SparkMax.ResetMode.kResetSafeParameters, SparkMax.PersistMode.kPersistParameters )
