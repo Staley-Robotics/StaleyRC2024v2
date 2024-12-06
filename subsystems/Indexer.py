@@ -6,7 +6,7 @@ from rev import SparkMax
 class IndexerSpeeds:
     #TODO PROBABLY NEED TO CHANGE THIS
 
-    EJECT:float = 0.5
+    EJECT:float = -0.5 #this is negative bc eject is backwards yeye
     STOP:float = 0.0
     HANDOFF:float = 0.35
 
@@ -86,4 +86,4 @@ class Indexer(Subsystem):
     
     # Check if Subsystem is at the Desired State
     def atSpeed(self) -> bool:
-        return False
+        return (self.m_motor.get() == self.m_speed)
