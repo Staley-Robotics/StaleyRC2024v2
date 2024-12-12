@@ -4,7 +4,7 @@ from wpimath import applyDeadband
 from commands2.button import CommandXboxController
 
 class FalconXboxController(CommandXboxController):
-    def __init__(self, port:int, deadband:float = 0.04, squaredInputs:bool = False):
+    def __init__(self, port:int, deadband:float = 0.04, squaredInputs:bool = True):
         super().__init__(port)
         self.__deadband = deadband
         self.__squaredInputs = squaredInputs
@@ -66,7 +66,7 @@ class FalconXboxController(CommandXboxController):
 
         :returns: The axis value.
         """
-        lX = -super().getLeftX()
+        lX = -super().getRightX()
         returnX = lX * ( 1 if not self.__squaredInputs else abs(lX) )
         return applyDeadband( returnX, self.__deadband )
     
