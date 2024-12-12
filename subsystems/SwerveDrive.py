@@ -133,13 +133,13 @@ class SwerveDrive(Subsystem):
     def __resetOdometry(self, pose:Pose2d) -> None:
         self.__odometry = SwerveDrive4Odometry(
             self.__kinematics,
-            self.__gyro.getRotation2d(),
+            self.getRobotAngle(),
             self.__getModulePositions(),
             pose
         )
         self.__visionOdometry = SwerveDrive4PoseEstimator(
             self.__kinematics,
-            self.__gyro.getRotation2d(),
+            self.getRobotAngle(),
             self.__getModulePositions(),
             pose
         )
@@ -168,26 +168,28 @@ class SwerveDrive(Subsystem):
 
         if not self.__odometryLock:
             pose = self.__odometry.update(
-                self.__gyro.getRotation2d(),
+                self.getRobotAngle(),
                 self.__getModulePositions()
             )
 
             # Update Vision Odometry
             vPose = self.__visionOdometry.update(
-                self.__gyro.getRotation2d(),
+                self.getRobotAngle(),
                 self.__getModulePositions()
             )
         
-        # Dashboarding
-        match DriverStation.getAlliance():
-            case DriverStation.Alliance.kBlue:
-                self.__field.setRobotPose( pose )
-                self.__field.getObject( "Vision" ).setPose( vPose )
-            case DriverStation.Alliance.kRed:
-                rPose = Pose2d( x=16.523 - pose.X(), y=8.013 - pose.Y(), angle= pose.rotation().radians() - math.pi )
-                rvPose = Pose2d( x=16.523 - vPose.X(), y=8.013 - vPose.Y(), angle= vPose.rotation().radians() - math.pi )
-                self.__field.setRobotPose( rPose )
-                self.__field.getObject( "Vision" ).setPose( rvPose )
+        # Dashboarding -- Updated Odometry to only use Blue Relative
+        self.__field.setRobotPose( pose )
+        self.__field.getObject( "BlueVisionPose" ).setPose( vPose )
+        # match DriverStation.getAlliance():
+        #     case DriverStation.Alliance.kBlue:
+        #         self.__field.setRobotPose( pose )
+        #         self.__field.getObject( "Vision" ).setPose( vPose )
+        # if self.shouldFlipPath():
+        #     rPose = Pose2d( x=16.523 - pose.X(), y=8.013 - pose.Y(), angle= pose.rotation().radians() - math.pi )
+        #     rvPose = Pose2d( x=16.523 - vPose.X(), y=8.013 - vPose.Y(), angle= vPose.rotation().radians() - math.pi )
+        #     self.__field.getObject( "RedPose" ).setPose( vPose )
+        #     self.__field.getObject( "RedVisionPose" ).setPose( rvPose )
        
         # Output Logging
         ntTime = _now()
@@ -217,6 +219,11 @@ class SwerveDrive(Subsystem):
     def stop(self) -> None:
         self.runChassisSpeeds( ChassisSpeeds( 0.0, 0.0, 0.0 ) )
  
+    def getRobotAngle(self) -> Rotation2d:
+        rotateBy = 180.0 if self.shouldFlipPath() else 0.0
+        print( rotateBy )
+        return self.__gyro.getRotation2d().rotateBy( Rotation2d.fromDegrees(rotateBy) )
+
     # Run By Percentage
     def runPercentInputs(self, x:float, y:float, omega:float) -> None:
         # Range Tolerances
@@ -229,7 +236,7 @@ class SwerveDrive(Subsystem):
         omegaSpeed = omega * self.__DriveMaxRotationPercent * SwerveDriveConstants.kRotationSpeed
 
         cSpeed = (
-            ChassisSpeeds.fromFieldRelativeSpeeds( xSpeed, ySpeed, omegaSpeed, self.__gyro.getRotation2d() )
+            ChassisSpeeds.fromFieldRelativeSpeeds( xSpeed, ySpeed, omegaSpeed, self.__gyro.getRotation2d() ) # self.getRobotAngle() )
             if self.__DriveFieldRelative
             else ChassisSpeeds( xSpeed, ySpeed, omegaSpeed )
         )
