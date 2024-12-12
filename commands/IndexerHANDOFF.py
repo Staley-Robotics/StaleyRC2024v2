@@ -34,7 +34,8 @@ class IndexerHANDOFF(Command):
 
     # Is Finished
     def isFinished(self) -> bool:
-        return False
+        return self.m_subsystem.hasHalfNote() == -1 
+        # Logic: if only upper sensor sees note, then handoff is finished... ok makes sense
 
     # Run When Disabled
     def runsWhenDisabled(self) -> bool:

@@ -1,5 +1,5 @@
 from commands2 import Subsystem
-from wpilib import RobotState, DriverStation, RobotBase
+from wpilib import RobotState, DriverStation, RobotBase, DigitalInput
 from ntcore import NetworkTable, NetworkTableInstance
 from rev import SparkMax
 
@@ -18,22 +18,24 @@ class Indexer(Subsystem):
     m_logging:NetworkTable = None
 
     # Initialization
-    def __init__(self, device_id:int) -> None:
+    def __init__(self, device_id:int, lower_sensor_id:int, upper_sensor_id:int) -> None:
         # make motour and make no move
         self.m_deviceId = device_id
-        self.m_motor = SparkMax( self.m_deviceId, SparkMax.MotorType.kBrushless)
+        self.m_motor = SparkMax( self.m_deviceId, SparkMax.MotorType.kBrushless )
         self.m_speed = IndexerSpeeds.STOP
         
         # Motour init bananas
         # self.m_motor.setIdleMode(self.m_motor.IdleMode.kBrake)
         #self.m_motor.IdleMode(self.m_motor.IdleMode.kBrake)
+        self.m_lower_sensor = DigitalInput( lower_sensor_id )
+        self.m_upper_sensor = DigitalInput( upper_sensor_id )
 
-        self.m_logging = NetworkTableInstance.getDefault().getTable("/Logging/Indexer")
+        self.m_logging = NetworkTableInstance.getDefault().getTable( "/Logging/Indexer" )
 
     # Periodic Loop
     def periodic(self) -> None:
         # Logging: Write Current Subsystem State
-        self.m_logging.putString( "IndexerState", "A-Ok... probably")
+        self.m_logging.putString( "IndexerState", "A-Ok... probably" )
 
         # Run Subsystem: Set New State To Subsystem
         if RobotState.isDisabled():
@@ -66,6 +68,29 @@ class Indexer(Subsystem):
     # Stop Indexer
     def stop(self) -> None:
         self.m_speed = IndexerSpeeds.STOP
+
+    def hasNote(self):
+        """
+        Returns whether or not the Indexer fully has a note (both sensors see note)
+        """
+        return self.m_upper_sensor.get() and self.m_upper_sensor.get()
+    
+    def hasHalfNote(self):
+        """
+        Returns
+        0 if both sensors see note
+        0 if no sensors see note
+        1 if ONLY lower sensor sees note
+        -1 if ONLY upper sensor sees note
+        """
+        if self.hasNote():
+            return 0
+        elif self.m_lower_sensor.get():
+            return 1
+        elif self.m_upper_sensor.get():
+            return -1
+        else:
+            return 0
 
     # Set the Desired State Value
     def setSpeed(self, speed:float) -> None:
