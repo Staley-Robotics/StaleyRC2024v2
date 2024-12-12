@@ -1,10 +1,13 @@
+import math
+
 from wpimath import applyDeadband
 from commands2.button import CommandXboxController
 
 class FalconXboxController(CommandXboxController):
-    def __init__(self, port:int, deadband:float = 0.04):
+    def __init__(self, port:int, deadband:float = 0.04, squaredInputs:bool = False):
         super().__init__(port)
         self.__deadband = deadband
+        self.__squaredInputs = squaredInputs
 
     def getLeftUpDown(self) -> float:
         """
@@ -12,11 +15,14 @@ class FalconXboxController(CommandXboxController):
         
         Additional Features:
         - Integrates Deadband
+        - Allows for Squared Inputs
         - Positive Forward
 
         :returns: The axis value.
         """
-        return applyDeadband( -super().getLeftY(), self.__deadband )
+        lY = -super().getLeftY()
+        returnY = lY * ( 1 if not self.__squaredInputs else abs(lY) )
+        return applyDeadband( returnY, self.__deadband )
     
     def getLeftSideToSide(self) -> float:
         """
@@ -24,11 +30,14 @@ class FalconXboxController(CommandXboxController):
         
         Additional Features:
         - Integrates Deadband
+        - Allows for Squared Inputs
         - Positive Left
 
         :returns: The axis value.
         """
-        return applyDeadband( -super().getLeftX(), self.__deadband )
+        lX = -super().getLeftX()
+        returnX = lX * ( 1 if not self.__squaredInputs else abs(lX) )
+        return applyDeadband( returnX, self.__deadband )
     
     def getRightUpDown(self) -> float:
         """
@@ -36,11 +45,15 @@ class FalconXboxController(CommandXboxController):
         
         Additional Features:
         - Integrates Deadband
+        - Allows for Squared Inputs
         - Positive Forward
 
         :returns: The axis value.
         """
-        return applyDeadband( -super().getRightY(), self.__deadband )
+        lY = -super().getRightY()
+        returnY = lY * ( 1 if not self.__squaredInputs else abs(lY) )
+        return applyDeadband( returnY, self.__deadband )
+
     
     def getRightSideToSide(self) -> float:
         """
@@ -48,11 +61,14 @@ class FalconXboxController(CommandXboxController):
         
         Additional Features:
         - Integrates Deadband
+        - Allows for Squared Inputs
         - Positive Left
 
         :returns: The axis value.
         """
-        return applyDeadband( -super().getRightX(), self.__deadband )
+        lX = -super().getLeftX()
+        returnX = lX * ( 1 if not self.__squaredInputs else abs(lX) )
+        return applyDeadband( returnX, self.__deadband )
     
     # Override getLeftTriggerAxis with deadband (for FRC)
     def getLeftTriggerAxis(self) -> float:
@@ -62,10 +78,13 @@ class FalconXboxController(CommandXboxController):
         
         Additional Features:
         - Integrates Deadband
+        - Allows for Squared Inputs
 
         :returns: The axis value.
         """
-        return applyDeadband( super().getLeftTriggerAxis(), self.__deadband )
+        lT = super().getLeftTriggerAxis()
+        returnLT = lT * ( 1 if not self.__squaredInputs else abs(lT) )
+        return applyDeadband( returnLT, self.__deadband )
     
     # Override getRightTriggerAxis with deadband (for FRC)
     def getRightTriggerAxis(self) -> float:
@@ -75,10 +94,13 @@ class FalconXboxController(CommandXboxController):
         
         Additional Features:
         - Integrates Deadband
+        - Allows for Squared Inputs
 
         :returns: The axis value.
         """
-        return applyDeadband( super().getRightTriggerAxis(), self.__deadband )
+        rT = super().getRightTriggerAxis()
+        returnRT = rT * ( 1 if not self.__squaredInputs else abs(rT) )
+        return applyDeadband( returnRT, self.__deadband )
     
     # Custom Command to combine Left and Right Trigger Axises
     def getTriggers(self) -> float:
@@ -88,6 +110,7 @@ class FalconXboxController(CommandXboxController):
         Additional Features:
         - Combines LT and RT
         - Integrates Deadband
+        - Allows for Squared Inputs
         - Positive Left
 
         :returns: The axis value.
