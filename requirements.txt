@@ -9,3 +9,5 @@ robotpy[phoenix6]==2025.0.0b2
 robotpy[rev]==2025.0.0b2
 
 #robotpy-rev==2025.0.0b1.post1
+
+#limelightlib-python==0.9.6
