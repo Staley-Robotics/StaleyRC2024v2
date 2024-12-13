@@ -11,7 +11,7 @@ robotpy_version = "2025.0.0b2"
 # Which extra RobotPy components should be installed
 robotpy_extras = [
     "commands2",
-    "pathplanner",
+    "pathplannerlib",
     "phoenix6",
     "rev"
 ]
