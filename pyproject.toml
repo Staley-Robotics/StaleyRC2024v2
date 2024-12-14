@@ -10,13 +10,15 @@ robotpy_version = "2025.0.0b2"
 
 # Which extra RobotPy components should be installed
 robotpy_extras = [
-    "commands2",
-    "pathplannerlib",
-    "phoenix6",
-    "rev"
+    "commands2" #,
+    #"pathplannerlib",
+    #"phoenix6",
+    #"rev"
 ]
 
-# requires = [
-#     "robotpy-rev==2025.0.0b1",
-#     "limelightlib-python==0.9.6"
-# ]
+requires = [
+    "phoenix6==25.0.0b4",
+    "robotpy-pathplannerlib==2025.0.0b5",
+    "robotpy-rev==2025.0.0b1",
+    "limelightlib-python==0.9.6"
+]
