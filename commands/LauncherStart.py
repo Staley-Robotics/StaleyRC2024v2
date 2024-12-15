@@ -1,6 +1,7 @@
 from commands2 import Command
 
 from subsystems import Launcher
+from util import *
 
 class LauncherStart(Command):
     # Initialization
@@ -17,15 +18,21 @@ class LauncherStart(Command):
 
     # On Start
     def initialize(self) -> None:
+        if Crescendo.getState() == ShredderState.HOLD_FEEDER:
+            Crescendo.setState( ShredderState.PREPARE_TO_SHOOT )
         self.__launcher.setSetpoint( self.__speed )
 
     # Periodic
     def execute(self) -> None:
+        #Crescendo.setState( ShredderState.PREPARE_TO_SHOOT )
         pass
 
     # On End
     def end(self, interrupted:bool) -> None:
-        return None #self.__launcher.stop()
+        if not interrupted:
+            if Crescendo.getState() == ShredderState.PREPARE_TO_SHOOT:
+                Crescendo.setState( ShredderState.READY_TO_SHOOT )
+        return None
 
     # Is Finished
     def isFinished(self) -> bool:

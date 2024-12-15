@@ -1,6 +1,4 @@
-from enum import Enum
-
-from commands2 import Command, ConditionalCommand, WrapperCommand
+from commands2 import Command, InstantCommand
 #from commands2.button import CommandXboxController, Trigger
 import commands2.cmd as cmd
 from wpilib import SendableChooser, SmartDashboard
@@ -8,11 +6,10 @@ from wpilib.shuffleboard import Shuffleboard
 
 from pathplannerlib.auto import AutoBuilder, NamedCommands
 
-from gamestates.ShredderState import ShredderState
 from commands import *
 from commands.defaults import *
 from subsystems import *
-from util.FalconXboxController import FalconXboxController
+from util import *
 
 class RobotContainer:
     # Variable Declaration
@@ -24,6 +21,8 @@ class RobotContainer:
         driver1 = FalconXboxController( 0 )
 
         # Declare Subsystems
+        sysCrescendo = Crescendo()
+        sysCrescendo.setState( ShredderState.DEFAULT )
         sysDriveTrain = SwerveDrive()
         sysIntake = Intake()
         sysFeeder = Feeder()
@@ -58,11 +57,11 @@ class RobotContainer:
         cmdLaunchStop    = LauncherStop( sysLauncher )
 
         # Default Commands
-        defaultSwerveDrive = DefaultSwerveDrive( sysDriveTrain, lambda: ShredderState.NoState, driver1.getLeftUpDown, driver1.getLeftSideToSide, driver1.getRightSideToSide )
-        defaultIntake = DefaultIntake( sysIntake, lambda: ShredderState.NoState )
-        defaultPivot = DefaultPivot( sysPivot, lambda: ShredderState.NoState )
-        defaultFeeder = DefaultFeeder( sysFeeder, lambda: ShredderState.NoState )
-        defaultLauncher = DefaultLauncher( sysLauncher, lambda: ShredderState.NoState )
+        defaultSwerveDrive = DefaultSwerveDrive( sysDriveTrain, driver1.getLeftUpDown, driver1.getLeftSideToSide, driver1.getRightSideToSide )
+        defaultIntake = DefaultIntake( sysIntake )
+        defaultPivot = DefaultPivot( sysPivot )
+        defaultFeeder = DefaultFeeder( sysFeeder )
+        defaultLauncher = DefaultLauncher( sysLauncher )
 
         # Sequences
         seqPickupIntake = IntakePickup( sysIntake )
@@ -109,12 +108,21 @@ class RobotContainer:
         sysLauncher.setDefaultCommand( defaultLauncher )
 
         # Driver Controller Button Binding
-        driver1.a().toggleOnTrue( cmdIntakePickup )
-        driver1.b().toggleOnTrue( cmdIntakeHandoff )
-        driver1.x().toggleOnTrue( seqPickup )
-        driver1.y().toggleOnTrue( seqLaunch )
-        driver1.start().onTrue( cmdDriveResetGyro )
-        driver1.back().onTrue( cmdVisionTLIR )
+        # driver1.a().toggleOnTrue( cmdIntakePickup )
+        # driver1.b().toggleOnTrue( cmdIntakeHandoff )
+        # driver1.x().toggleOnTrue( seqPickup )
+        # driver1.y().toggleOnTrue( seqLaunch )
+        # driver1.start().onTrue( cmdDriveResetGyro )
+        # driver1.back().onTrue( cmdVisionTLIR )
+
+        sysCrescendo.setIntakeHasNote( sysIntake.hasNote )
+        sysCrescendo.setFeederHasBottomNote( sysFeeder.bottomHasNote )
+        sysCrescendo.setFeederHasTopNote( sysFeeder.topHasNote )
+        sysCrescendo.setPivotAtPosition( sysPivot.atSetpoint )
+
+        driver1.a().onTrue( InstantCommand( lambda: sysCrescendo.setNextState() ) )
+        driver1.b().onTrue( InstantCommand( lambda: sysCrescendo.setNextTarget() ) )
+        driver1.x().onTrue( InstantCommand( lambda: defaultLauncher.toggleAutoStart() ) )
         
         # Dashboard Commands
         self.addDashboardCommands( "Intake",   [cmdIntakeHandoff, cmdIntakePickup, cmdIntakeEject] )

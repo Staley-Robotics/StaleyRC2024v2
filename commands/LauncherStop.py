@@ -1,12 +1,14 @@
 from commands2 import Command
 
 from subsystems import Launcher, LauncherOptions
+from util import *
 
 class LauncherStop(Command):
     # Initialization
-    def __init__( self,
-                  mySubsystem:Launcher
-                ) -> None:
+    def __init__(
+        self,
+        mySubsystem:Launcher
+    ) -> None:
         # Command Attributes
         self.__launcher:Launcher = mySubsystem
 
@@ -23,11 +25,16 @@ class LauncherStop(Command):
 
     # On End
     def end(self, interrupted:bool) -> None:
+        match Crescendo.getState():
+            case ShredderState.HOLD_FEEDER:
+                pass    
+            case ShredderState.SHOT_COMPLETE:
+                Crescendo.setState( ShredderState.DEFAULT )
         self.__launcher.stop()
 
     # Is Finished
     def isFinished(self) -> bool:
-        return True # self.__launcher.hasLaunched()
+        return self.__launcher.atSetpoint()
 
     # Run When Disabled
     def runsWhenDisabled(self) -> bool:

@@ -2,25 +2,31 @@
 from typing import Callable
 
 # WPI Imports
-from commands2 import cmd
+from commands2 import cmd, SelectCommand
 
 # Team Command Based Imports
 from commands import *
-from subsystems import Pivot
+from subsystems import Pivot, PivotPositions
 
 # Team Utility Imports
-from gamestates.ShredderState import ShredderState
-from util.DefaultCommand import DefaultCommand
+from util import * #DefaultCommand, ShredderState, Crescendo
 
 class DefaultPivot(DefaultCommand):
     def __init__(
         self,
-        pivotSubsystem:Pivot,
-        gameState:Callable[[],ShredderState] = lambda: None,
+        pivotSubsystem:Pivot
     ) -> None:
         super().__init__(
             {
-                ShredderState.DoNothing: cmd.run( lambda: None, pivotSubsystem )
+                ShredderState.PICKUP: PivotToPosition( pivotSubsystem, PivotPositions.HANDOFF ),
+                ShredderState.HOLD_INTAKE: PivotToPosition( pivotSubsystem, PivotPositions.HANDOFF ),
+                ShredderState.WAIT_FOR_PIVOT:  PivotToPosition( pivotSubsystem, PivotPositions.HANDOFF ),
+                ShredderState.HANDOFF: PivotToPosition( pivotSubsystem, PivotPositions.HANDOFF ),
+                ShredderState.HOLD_FEEDER: PivotToTarget( pivotSubsystem ),
+                ShredderState.PREPARE_TO_SHOOT: PivotToTarget( pivotSubsystem ),
+                ShredderState.READY_TO_SHOOT: PivotToTarget( pivotSubsystem ),
+                ShredderState.SHOOTING: PivotToTarget( pivotSubsystem ),
+                ShredderState.SHOT_COMPLETE: PivotToPosition( pivotSubsystem, PivotPositions.HANDOFF )
             },
-            gameState
+            Crescendo.getState
         )

@@ -29,6 +29,8 @@ class FeederHandoff(Command):
     # Periodic
     def execute(self) -> None:
         if not self.__pullBack:
+            if self.__feeder.hasSecuredNote():
+                self.__feeder.setSetpoint( FeederModes.BALANCEIN )
             if self.__feeder.topHasNote() and not self.__feeder.bottomHasNote():
                 self.__pullBack = True
                 self.__feeder.setSetpoint( FeederModes.BALANCEOUT )

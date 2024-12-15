@@ -9,18 +9,17 @@ from commands import *
 from subsystems import Intake
 
 # Team Utility Imports
-from gamestates.ShredderState import ShredderState
-from util.DefaultCommand import DefaultCommand
+from util import DefaultCommand, ShredderState, Crescendo
 
 class DefaultIntake(DefaultCommand):
     def __init__(
         self,
-        intakeSubsystem:Intake,
-        gameState:Callable[[],ShredderState] = lambda: None,
+        intakeSubsystem:Intake
     ):
         super().__init__(
             {
-                ShredderState.DoNothing: cmd.run( lambda: None, intakeSubsystem )
+                ShredderState.PICKUP: IntakePickup( intakeSubsystem ),
+                ShredderState.HANDOFF: IntakeHandoff( intakeSubsystem )
             },
-            gameState
+            Crescendo.getState
         )

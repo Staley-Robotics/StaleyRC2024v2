@@ -1,5 +1,6 @@
 from commands2 import Command
 from subsystems import Intake, IntakeOptions
+from util import *
 
 class IntakePickup(Command):
     # Initialization
@@ -22,6 +23,8 @@ class IntakePickup(Command):
 
     # On End
     def end(self, interrupted:bool) -> None:
+        if not interrupted:           
+            Crescendo.setState( ShredderState.HOLD_INTAKE )
         self.__intake.setSetpoint( IntakeOptions.STOP )
 
     # Is Finished

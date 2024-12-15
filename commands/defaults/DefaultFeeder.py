@@ -9,18 +9,18 @@ from commands import *
 from subsystems import Feeder
 
 # Team Utility Imports
-from gamestates.ShredderState import ShredderState
-from util.DefaultCommand import DefaultCommand
+from util import DefaultCommand, ShredderState, Crescendo
 
 class DefaultFeeder(DefaultCommand):
     def __init__(
         self,
-        feederSubsystem:Feeder,
-        gameState:Callable[[],ShredderState] = lambda: None,
+        feederSubsystem:Feeder
     ):
         super().__init__(
             {
-                ShredderState.DoNothing: cmd.run( lambda: None, feederSubsystem )
+                ShredderState.HANDOFF: FeederHandoff( feederSubsystem ),
+                ShredderState.UNBALANCED: FeederBalance( feederSubsystem ),
+                ShredderState.SHOOTING: FeederLaunch( feederSubsystem )
             },
-            gameState
+            Crescendo.getState
         )

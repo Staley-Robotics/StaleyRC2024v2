@@ -151,5 +151,8 @@ class Pivot(PIDSubsystem):
     def getMeasurement(self) -> float:
         return self.__encoder.get_position().value
 
-    def atSetpoint(self) -> bool:
-        return self._controller.atSetpoint()
+    def atSetpoint(self, position:float = None) -> bool:
+        if position is None or self.getSetpoint() == degreesToRotations( position ):
+            return self._controller.atSetpoint()
+        else:
+            return False

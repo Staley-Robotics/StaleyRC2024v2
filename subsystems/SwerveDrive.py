@@ -221,7 +221,6 @@ class SwerveDrive(Subsystem):
  
     def getRobotAngle(self) -> Rotation2d:
         rotateBy = 180.0 if self.shouldFlipPath() else 0.0
-        print( rotateBy )
         return self.__gyro.getRotation2d().rotateBy( Rotation2d.fromDegrees(rotateBy) )
 
     # Run By Percentage

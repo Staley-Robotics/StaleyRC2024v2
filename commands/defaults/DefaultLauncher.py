@@ -2,25 +2,44 @@
 from typing import Callable
 
 # WPI Imports
-from commands2 import cmd
+from commands2 import * #cmd
 
 # Team Command Based Imports
 from commands import *
 from subsystems import Launcher
 
 # Team Utility Imports
-from gamestates.ShredderState import ShredderState
-from util.DefaultCommand import DefaultCommand
+from util import DefaultCommand, ShredderState, Crescendo
 
 class DefaultLauncher(DefaultCommand):
+    __autoStart:bool = True
+
     def __init__(
         self,
-        launcherSubsystem:Launcher,
-        gameState:Callable[[],ShredderState] = lambda: None,
+        launcherSubsystem:Launcher
     ):
         super().__init__(
             {
-                ShredderState.DoNothing: cmd.run( lambda: None, launcherSubsystem )
+                #ShredderState.DEFAULT: LauncherStop( launcherSubsystem ),
+                ShredderState.UNBALANCED: LauncherStop( launcherSubsystem ),
+                ShredderState.HOLD_FEEDER: ConditionalCommand(
+                    LauncherToTarget( launcherSubsystem ),
+                    LauncherStop( launcherSubsystem ), 
+                    self.getAutoStart
+                ).withName( "LauncherWait" ),
+                ShredderState.PREPARE_TO_SHOOT: LauncherToTarget( launcherSubsystem ),
+                ShredderState.READY_TO_SHOOT: LauncherToTarget( launcherSubsystem ),
+                ShredderState.SHOT_COMPLETE: LauncherStop( launcherSubsystem )
             },
-            gameState
+            Crescendo.getState
         )
+    
+    def getAutoStart(self):
+        return self.__autoStart
+
+    def setAutoStart(self, enable:bool) -> None:
+        self.__autoStart = enable
+        print( f"AutoStart Launcher: {self.__autoStart}" )
+
+    def toggleAutoStart(self):
+        self.setAutoStart( not self.getAutoStart() )

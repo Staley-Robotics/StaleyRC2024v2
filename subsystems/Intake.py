@@ -31,6 +31,7 @@ class Intake(Subsystem):
     __logger:NetworkTable = None
 
     __setpoint:float = 0.0
+    __brake:bool = False
 
     # Initialization
     def __init__(self) -> None:
@@ -97,8 +98,11 @@ class Intake(Subsystem):
 
     # Run the Subsystem
     def run(self) -> None:
-        self.__topMotor.set( self.__setpoint )
-        self.__bottomMotor.set( self.__setpoint )
+        # self.__topMotor.set( self.__setpoint )
+        # self.__bottomMotor.set( self.__setpoint )
+
+        self.__topMotor.set_control( DutyCycleOut( self.__setpoint, override_brake_dur_neutral=self.__brake) )
+        self.__bottomMotor.set_control( DutyCycleOut( self.__setpoint, override_brake_dur_neutral=self.__brake) )
 
     # Stop the Subsystem
     def stop(self) -> None:
@@ -118,12 +122,14 @@ class Intake(Subsystem):
 
     # Set Motor Brake Mode (Uses Multi-Threaded Processing to prevent periodic cycle skip)
     def setBrake(self, brake:bool) -> None:
-        def changeBrake( brakeSetting:bool ):
-            mode = NeutralModeValue.BRAKE if brakeSetting else NeutralModeValue.COAST
-            self.__topMotor.setNeutralMode( mode, 0.1 )
-            self.__bottomMotor.setNeutralMode( mode, 0.1 )
+        # def changeBrake( brakeSetting:bool ):
+        #     mode = NeutralModeValue.BRAKE if brakeSetting else NeutralModeValue.COAST
+        #     self.__topMotor.setNeutralMode( mode, 0.1 )
+        #     self.__bottomMotor.setNeutralMode( mode, 0.1 )
 
-        threading.Thread( target=lambda: changeBrake(brake) ).start()
+        # threading.Thread( target=lambda: changeBrake(brake) ).start()
+        
+        self.__brake = brake
 
     # Get the IR Beam State
     def hasNote(self) -> bool:

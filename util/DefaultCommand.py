@@ -25,7 +25,8 @@ class DefaultCommand(SelectCommand):
         :param selector: the selector to determine which command to run
         """
         super().__init__(commands, selector)
-        self._defaultCommand = cmd.none().withName( f"{self.__class__.__name__}" ) if defaultCommand is None else defaultCommand
+        #self._defaultCommand = cmd.none().withName( f"{self.__class__.__name__}" ) if defaultCommand is None else defaultCommand
+        self._defaultCommand = cmd.none().withName( f"None" ) if defaultCommand is None else defaultCommand
         self.setName( f"{self.__class__.__name__}" )
 
     def initialize(self) -> None:
@@ -35,7 +36,6 @@ class DefaultCommand(SelectCommand):
         self.setName( name )
 
     def execute(self) -> None:
-        self.__prevState = self.__getCurrentState()
         super().execute()
 
     def isFinished(self) -> bool:
@@ -45,7 +45,8 @@ class DefaultCommand(SelectCommand):
 
     def end(self, interrupted:bool) -> None:
         self.setName( f"{self.__class__.__name__}" )
-        super().end(interrupted)
+        changedState = self.__hasStateChanged()
+        super().end( interrupted or changedState )
 
     def __hasStateChanged(self) -> bool:
         return self.__getPreviousState() != self.__getCurrentState()

@@ -3,6 +3,7 @@ import typing
 from commands2 import Command
 
 from subsystems import Feeder, FeederModes
+from util import *
 
 class FeederLaunch(Command):
     # Variable Declaration
@@ -31,6 +32,7 @@ class FeederLaunch(Command):
 
     # On End
     def end(self, interrupted:bool) -> None:
+        Crescendo.setState( ShredderState.HOLD_FEEDER if interrupted else ShredderState.SHOT_COMPLETE )
         self.__feeder.stop()
 
     # Is Finished
