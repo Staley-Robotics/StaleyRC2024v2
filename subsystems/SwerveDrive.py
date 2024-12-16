@@ -82,18 +82,18 @@ class SwerveDrive(Subsystem):
         self.__outSwerveModuleStateTarget = NetworkTableInstance.getDefault().getStructArrayTopic("/RealOutputs/SwerveDrive/SwerveModuleStates/Target", SwerveModuleState).publish()
        
         # Path Planner
-        #config = RobotConfig.fromGUISettings()
+        # robotConfig = RobotConfig.fromGUISettings()
         moduleConfig = ModuleConfig(
             wheelRadiusMeters = SwerveModuleConstants.Drive.kWheelRadius,
             maxDriveVelocityMPS = SwerveDriveConstants.kMaxSpeed,
-            wheelCOF = 0.0,
+            wheelCOF = 1.0,
             driveMotor = DCMotor.NEO(1),
             driveCurrentLimit = 40.0,
             numMotors = 1
         )
         robotConfig = RobotConfig(
             massKG = lbsToKilograms( SwerveDriveConstants.kWeightLbs ),
-            MOI = 0.0,
+            MOI = 1.0,
             moduleConfig = moduleConfig,
             moduleOffsets = self.__kinematics.getModules(),
             trackwidthMeters = None
