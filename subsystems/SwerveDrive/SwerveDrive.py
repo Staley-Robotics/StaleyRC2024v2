@@ -9,9 +9,9 @@ from commands2 import Subsystem
 from ntcore import NetworkTable, NetworkTableInstance
 from ntcore.util import ntproperty
 
-from pathplannerlib.auto import AutoBuilder
-from pathplannerlib.controller import PPHolonomicDriveController
-from pathplannerlib.config import RobotConfig, PIDConstants
+# from pathplannerlib.auto import AutoBuilder
+# from pathplannerlib.controller import PPHolonomicDriveController
+# from pathplannerlib.config import RobotConfig, PIDConstants
 
 from .SwerveModule import SwerveModule
 from .CustomPigeon2 import CustomPigeon2
@@ -82,20 +82,20 @@ class SwerveDrive(Subsystem):
 
         ## Pathplanner Setup
         #load robot config from pathplanner
-        config = RobotConfig.fromGUISettings()
-        AutoBuilder.configure(
-            self.getPose,
-            self.resetPose,
-            self.getChassisSpeeds,
-            lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
-            PPHolonomicDriveController(
-                PIDConstants(5.0,0.0,0.0), #Translation Pid
-                PIDConstants(5.0,0.0,0.0)  #Rotation Pid
-            ),
-            config,
-            lambda: DriverStation.getAlliance() == DriverStation.Alliance.kRed,
-            self
-        )
+        # config = RobotConfig.fromGUISettings()
+        # AutoBuilder.configure(
+        #     self.getPose,
+        #     self.resetPose,
+        #     self.getChassisSpeeds,
+        #     lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
+        #     PPHolonomicDriveController(
+        #         PIDConstants(5.0,0.0,0.0), #Translation Pid
+        #         PIDConstants(5.0,0.0,0.0)  #Rotation Pid
+        #     ),
+        #     config,
+        #     lambda: DriverStation.getAlliance() == DriverStation.Alliance.kRed,
+        #     self
+        # )
 
     def updateLogging(self) -> None:
         self.m_logging.putNumber( "Gyro value", self.gyro.get_rotation_2d().degrees())

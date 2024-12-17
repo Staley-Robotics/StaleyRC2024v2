@@ -6,6 +6,6 @@ robotpy==2025.0.0b2
 robotpy[commands2]==2025.0.0b2
 robotpy-rev==2025.0.0b1.post1
 phoenix6==25.0.0b4
-robotpy-pathplannerlib==2025.0.0b5
+# robotpy-pathplannerlib==2025.0.0b5
 
 ## Other
