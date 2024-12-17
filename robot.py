@@ -18,15 +18,15 @@ class MyRobot(TimedRobot):
     # Autonomous Mode
     def autonomousInit(self):
         self.m_autonomousCommand = self.m_robotContainer.getAutonomousCommand()
-    
+        self.m_robotContainer.sync_gyro_to_vision()
     def autonomousPeriodic(self): pass
-
     def autonomousExit(self):
         if self.m_autonomousCommand != None:
             self.m_autonomousCommand.cancel()
 
     # Teleop Mode
-    def teleopInit(self): pass
+    def teleopInit(self): 
+        self.m_robotContainer.sync_gyro_to_vision()
     def teleopPeriodic(self): pass
     def teleopExit(self): pass
 

@@ -55,15 +55,11 @@ class SwerveModule:
         self.turn_motor.configure( turn_config, SparkMax.ResetMode.kResetSafeParameters, SparkMax.PersistMode.kPersistParameters )
 
         encoder_config = CANcoderConfiguration()
-        # encoder_config.magnet_sensor.with_magnet_offset(abs_encoder_offset)
         encoder_config.magnet_sensor.magnet_offset = -abs_encoder_offset
         self.abs_turn_encoder.configurator.apply(encoder_config)
-
-
-        #drive/turn Position Queues? (I think that was in MechAdv)
         
         #PID Controllers
-        # edit PID vals thru Sendable -> change here in code for persist
+        # edit PID vals thru Sendable -> change here in code for persistance
         self.drivePID = PIDController(0.0, 0.0, 0.0)
         self.turnPID = PIDController(4.3,0.0,0.0)
         # self.turnPID = ProfiledPIDController(
@@ -80,9 +76,6 @@ class SwerveModule:
 
         SmartDashboard.putData(f"{ssName}drivePID", self.drivePID)
         SmartDashboard.putData(f"{ssName}turnPID", self.turnPID)
-        #set dist per pulse on encoder
-        # self.drive_motor_encoder.
-        # hunt in tyler code, need to update neo from revolutions
 
     ##Logging funcs
     def getDriveVelocity(self) -> float:
@@ -91,16 +84,12 @@ class SwerveModule:
         velocity = rotationsPerMinuteToRadiansPerSecond(velocity)
         return velocity * self.k_wheel_radius
     
-    # def setDriveFF(self, val:float) -> None:
-    #     self.driveFF = SimpleMotorFeedforwardMeters(1, val)
-    
     ##Functional
     def getState(self) -> SwerveModuleState:
         return SwerveModuleState(
             self.drive_motor_encoder.getVelocity(),
             Rotation2d(self.getAbsoluteEncoderPosition())
         )
-
     def getPosition(self) -> SwerveModulePosition:
         return SwerveModulePosition(
             self.drive_motor_encoder.getPosition(),

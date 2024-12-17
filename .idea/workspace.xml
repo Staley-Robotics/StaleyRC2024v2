@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="fe623670-c756-4f11-8160-d6339478cda0" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/RobotContainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/RobotContainer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctre_sim/CANCoder vers. H - 012 - 0 - ext.dat" beforeDir="false" afterPath="$PROJECT_DIR$/ctre_sim/CANCoder vers. H - 012 - 0 - ext.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctre_sim/CANCoder vers. H - 014 - 0 - ext.dat" beforeDir="false" afterPath="$PROJECT_DIR$/ctre_sim/CANCoder vers. H - 014 - 0 - ext.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctre_sim/CANCoder vers. H - 016 - 0 - ext.dat" beforeDir="false" afterPath="$PROJECT_DIR$/ctre_sim/CANCoder vers. H - 016 - 0 - ext.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctre_sim/CANCoder vers. H - 018 - 0 - ext.dat" beforeDir="false" afterPath="$PROJECT_DIR$/ctre_sim/CANCoder vers. H - 018 - 0 - ext.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctre_sim/Pigeon 2 - 09 - 0 - ext.dat" beforeDir="false" afterPath="$PROJECT_DIR$/ctre_sim/Pigeon 2 - 09 - 0 - ext.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/robot.py" beforeDir="false" afterPath="$PROJECT_DIR$/robot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/subsystems/SwerveDrive/SwerveDrive.py" beforeDir="false" afterPath="$PROJECT_DIR$/subsystems/SwerveDrive/SwerveDrive.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/subsystems/SwerveDrive/SwerveModule.py" beforeDir="false" afterPath="$PROJECT_DIR$/subsystems/SwerveDrive/SwerveModule.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/subsystems/SwerveDrive/Vision.py" beforeDir="false" afterPath="$PROJECT_DIR$/subsystems/SwerveDrive/Vision.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/ctre_sim/CANCoder vers. H - 012 - 0 - ext.dat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/ctre_sim/CANCoder vers. H - 012 - 0 - ext.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/ctre_sim/CANCoder vers. H - 014 - 0 - ext.dat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/ctre_sim/CANCoder vers. H - 014 - 0 - ext.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/ctre_sim/CANCoder vers. H - 016 - 0 - ext.dat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/ctre_sim/CANCoder vers. H - 016 - 0 - ext.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/ctre_sim/CANCoder vers. H - 018 - 0 - ext.dat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/ctre_sim/CANCoder vers. H - 018 - 0 - ext.dat" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 1
+}]]></component>
+  <component name="ProjectId" id="2qAodVh7bbzBKIH9hae0GN3Pv7K" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "Ben-Drive"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-1b1018131e27-aa17d162503b-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-243.22562.180" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="fe623670-c756-4f11-8160-d6339478cda0" name="Changes" comment="" />
+      <created>1734114827546</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1734114827546</updated>
+    </task>
+    <servers />
+  </component>
+</project>

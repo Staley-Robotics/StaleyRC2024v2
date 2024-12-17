@@ -2,13 +2,13 @@ from wpilib import SendableChooser, SmartDashboard
 
 from wpimath.units import degreesToRotations
 
+from pathplannerlib.auto import AutoBuilder
+
 # from phoenix6.hardware import Pigeon2
 
 from commands2 import Command
 from commands2.button import CommandXboxController
 import commands2.cmd as cmd
-
-from rev import SparkMax
 
 from commands.DriveByStick import DriveByStick
 from subsystems.SwerveDrive.SwerveDrive import SwerveDrive
@@ -25,21 +25,21 @@ class RobotContainer:
 
         ## Declare Subsystems
         #Drive
+        gyro = CustomPigeon2( 9, 'canivore1')
         swerve_modules = [
             SwerveModule("FL", 7, 8, 18, -0.235352 ),#degreesToRotations(97.471)),#
             SwerveModule("FR", 1, 2, 12, -0.486572 ),#degreesToRotations(5.361)),#
             SwerveModule("BL", 5, 6, 16, -0.673584 ),#degreesToRotations(298.828)),#
             SwerveModule("BR", 3, 4, 14, -0.338 )#degreesToRotations(60.557)),#
         ]
-        gyro = CustomPigeon2( 9, 'canivore1')
+        
         self.drive = SwerveDrive( 'canivore1', swerve_modules, gyro )
 
-        self.test = SparkMax(22, SparkMax.MotorType.kBrushless)
         ## Commands
 
 
         ## Autonomous Chooser
-        self.m_autoChooser = SendableChooser()
+        self.m_autoChooser = AutoBuilder.buildAutoChooser()
         # self.m_autoChooser.setDefaultOption( "1 - None", cmd.none() )
         SmartDashboard.putData( "Autonomous Mode", self.m_autoChooser )
 
@@ -58,6 +58,9 @@ class RobotContainer:
         ## Controls
         self.m_driver1.start().onTrue(cmd.runOnce(self.drive.sync_gyro))
         # self.m_driver1.a().whileTrue( self.rightX )
+    
+    def sync_gyro_to_vision(self):
+        self.drive.sync_gyro()
 
     def getAutonomousCommand(self) -> Command:
         chooserValue = self.m_autoChooser.getSelected()

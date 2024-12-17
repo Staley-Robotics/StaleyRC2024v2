@@ -50,6 +50,7 @@ class Vision:
             data = camera.getLastUpdate()
             if data:
                 output.append(data)
+        
         return output
         
 
