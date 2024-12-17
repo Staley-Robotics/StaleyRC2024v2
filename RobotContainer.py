@@ -97,7 +97,7 @@ class RobotContainer:
         NamedCommands.registerCommand('LaunchSpeaker', seqLaunch )
 
         # Autonomous Chooser
-        self.__autoChooser = AutoBuilder.buildAutoChooser()
+        self.__autoChooser = AutoBuilder.buildAutoChooser( "None" )
         SmartDashboard.putData( "Auto Chooser", self.__autoChooser )
 
         # Default Commands
