@@ -146,6 +146,13 @@ class Crescendo(Subsystem):
                 self.setTarget( ShredderTarget.AMP )
             case ShredderTarget.TOSS:
                 self.setTarget( ShredderTarget.SPEAKER )
+
+        ## Change Shredder State based on ShreddedState here
+        match self.getState():
+            case ShredderState.PREPARE_TO_SHOOT:
+                self.setState( ShredderState.HOLD_FEEDER )
+            case ShredderState.READY_TO_SHOOT:
+                self.setState( ShredderState.HOLD_FEEDER )
     
 
     @classmethod
