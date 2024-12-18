@@ -12,4 +12,4 @@ phoenix6==25.0.0b4
 robotpy-pathplannerlib==2025.0.0b5
 robotpy-rev==2025.0.0b1.post1
 
-limelightlib-python==0.9.6
+#limelightlib-python==0.9.6
