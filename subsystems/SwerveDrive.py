@@ -15,9 +15,9 @@ from ntcore.util import ntproperty
 
 from phoenix6.hardware import Pigeon2
 
-from pathplannerlib.auto import AutoBuilder
-from pathplannerlib.controller import PPHolonomicDriveController
-from pathplannerlib.config import RobotConfig, PIDConstants, ModuleConfig
+# from pathplannerlib.auto import AutoBuilder
+# from pathplannerlib.controller import PPHolonomicDriveController
+# from pathplannerlib.config import RobotConfig, PIDConstants, ModuleConfig
 
 from subsystems.SwerveModule import SwerveModule, SwerveModuleConstants
 
@@ -82,7 +82,7 @@ class SwerveDrive(Subsystem):
         self.__outSwerveModuleStateTarget = NetworkTableInstance.getDefault().getStructArrayTopic("/RealOutputs/SwerveDrive/SwerveModuleStates/Target", SwerveModuleState).publish()
        
         # Path Planner
-        robotConfig = RobotConfig.fromGUISettings()
+        #robotConfig = RobotConfig.fromGUISettings()
         # moduleConfig = ModuleConfig(
         #     wheelRadiusMeters = SwerveModuleConstants.Drive.kWheelRadius,
         #     maxDriveVelocityMPS = SwerveDriveConstants.kMaxSpeed,
@@ -98,19 +98,19 @@ class SwerveDrive(Subsystem):
         #     moduleOffsets = self.__kinematics.getModules(),
         #     trackwidthMeters = None
         # )
-        AutoBuilder.configure(
-            pose_supplier = self.__odometry.getPose,
-            reset_pose = self.__odometry.resetPose,
-            robot_relative_speeds_supplier = self.getChassisSpeeds,
-            output = lambda speeds, feedforwards: self.runChassisSpeeds(speeds),
-            controller = PPHolonomicDriveController(
-                PIDConstants(5.0, 0.0, 0.0),
-                PIDConstants(5.0, 0.0, 0.0)
-            ),
-            robot_config = robotConfig,
-            should_flip_path = self.shouldFlipPath,
-            drive_subsystem = self
-        )
+        # AutoBuilder.configure(
+        #     pose_supplier = self.__odometry.getPose,
+        #     reset_pose = self.__odometry.resetPose,
+        #     robot_relative_speeds_supplier = self.getChassisSpeeds,
+        #     output = lambda speeds, feedforwards: self.runChassisSpeeds(speeds),
+        #     controller = PPHolonomicDriveController(
+        #         PIDConstants(5.0, 0.0, 0.0),
+        #         PIDConstants(5.0, 0.0, 0.0)
+        #     ),
+        #     robot_config = robotConfig,
+        #     should_flip_path = self.shouldFlipPath,
+        #     drive_subsystem = self
+        # )
 
     def shouldFlipPath(self) -> bool:
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
