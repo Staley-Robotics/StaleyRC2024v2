@@ -4,8 +4,6 @@ from wpimath.units import degreesToRotations
 
 # from pathplannerlib.auto import AutoBuilder
 
-# from phoenix6.hardware import Pigeon2
-
 from commands2 import Command
 from commands2.button import CommandXboxController
 import commands2.cmd as cmd
