@@ -5,11 +5,13 @@ from commands2 import Command, CommandScheduler
 from wpilib import TimedRobot, DriverStation, DataLogManager, RobotBase
 
 from RobotContainer import RobotContainer
+from util import FalconLogger
 
 class MyRobot(TimedRobot):
     # Variable Declaration
     __robotContainer:RobotContainer = None
     __autoCmd:Command = None
+    __logger:FalconLogger = None
 
     # Initialization
     def robotInit(self):
@@ -17,16 +19,19 @@ class MyRobot(TimedRobot):
         DriverStation.silenceJoystickConnectionWarning(True)
 
         # Start Logging using the built in DataLogManager
-        # logDir = '/U/logs' if RobotBase.isReal() else '.logs'
-        # DataLogManager.start( dir=(logDir if Path(logDir).is_dir() else ''), period=1.0 )
-        # DriverStation.startDataLog( DataLogManager.getLog() )
+        logDir = '/U/logs' if RobotBase.isReal() else '.logs'
+        DataLogManager.start( dir=(logDir if Path(logDir).is_dir() else ''), period=1.0 )
+        DriverStation.startDataLog( DataLogManager.getLog() )
         
         # Built The Robot
         self.__robotContainer = RobotContainer()
+        self.__logger = FalconLogger(False)
 
     # Periodic Loop / All Modes
     def robotPeriodic(self):
+        self.__logger.setTime()
         CommandScheduler.getInstance().run()
+        self.__logger.writeLog()
 
     # Autonomous Mode
     def autonomousInit(self):

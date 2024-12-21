@@ -4,8 +4,9 @@ from wpilib import RobotState, DigitalInput, RobotBase
 from wpilib.shuffleboard import Shuffleboard
 from wpimath.system.plant import DCMotor
 from wpimath.units import kSecondsPerMinute
-from ntcore import NetworkTable, NetworkTableInstance
-from rev import SparkMax, SparkRelativeEncoder, SparkMaxSim, SparkRelativeEncoderSim
+from rev import SparkMax, SparkRelativeEncoder, SparkMaxSim
+
+from util import FalconLogger
 
 class FeederModes:
     STOP:float = 0.0
@@ -27,7 +28,6 @@ class Feeder(Subsystem):
     __setpoint:int = 0.0
     __bottomIrBeam:DigitalInput = None
     __topIrBeam:DigitalInput = None
-    __logging:NetworkTable = None
     __balanceCmd:Command = None
 
     # Initialization
@@ -48,22 +48,18 @@ class Feeder(Subsystem):
         self.__bottomIrBeam:DigitalInput = DigitalInput(1)
         self.__topIrBeam:DigitalInput = DigitalInput(2)
         
-        # Logging
-        self.__logger = NetworkTableInstance.getDefault().getTable("/Logging/Feeder")
-        self.__measured = NetworkTableInstance.getDefault().getTable("/RealOutputs/Feeder")
-
         # Dashboards
         Shuffleboard.getTab( "Feeder" ).add( "Feeder", self )
 
     # Periodic Loop
     def periodic(self) -> None:
         # Logging: Write Current Subsystem State
-        self.__logger.putNumber( "MotorInput", self.__motor.get() )
-        self.__logger.putNumber( "MotorOutput", self.__motor.getAppliedOutput() )
-        self.__logger.putNumber( "MotorPosition_r", self.__motorEncoder.getPosition() )
-        self.__logger.putNumber( "MotorVelocity_rpm", self.__motorEncoder.getVelocity() )
-        self.__logger.putBoolean( "SensorTop", self.__topIrBeam.get() )
-        self.__logger.putBoolean( "SensorBottom", self.__bottomIrBeam.get() )
+        FalconLogger.logInput( "Feeder/MotorInput", self.__motor.get() )
+        FalconLogger.logInput( "Feeder/MotorOutput", self.__motor.getAppliedOutput() )
+        FalconLogger.logInput( "Feeder/MotorPosition_r", self.__motorEncoder.getPosition() )
+        FalconLogger.logInput( "Feeder/MotorVelocity_rpm", self.__motorEncoder.getVelocity() )
+        FalconLogger.logInput( "Feeder/SensorTop", self.__topIrBeam.get() )
+        FalconLogger.logInput( "Feeder/SensorBottom", self.__bottomIrBeam.get() )
 
         # Run Subsystem: Set New State To Subsystem
         if RobotState.isDisabled():
@@ -72,11 +68,11 @@ class Feeder(Subsystem):
       
         # Logging: Write Post Operation Information
         cmdName = self.getCurrentCommand().getName() if self.getCurrentCommand() != None else "None"
-        self.__measured.putString( "Command", cmdName )
-        self.__measured.putNumber( "Setpoint", self.getSetpoint() )
-        self.__measured.putBoolean( "HasNote", self.hasSecuredNote() )
-        self.__measured.putBoolean( "HasNoteTop", self.topHasNote() )
-        self.__measured.putBoolean( "HasNoteBottom", self.bottomHasNote() )
+        FalconLogger.logOutput( "Feeder/Command", cmdName )
+        FalconLogger.logOutput( "Feeder/Setpoint", self.getSetpoint() )
+        FalconLogger.logOutput( "Feeder/HasNote", self.hasSecuredNote() )
+        FalconLogger.logOutput( "Feeder/HasNoteTop", self.topHasNote() )
+        FalconLogger.logOutput( "Feeder/HasNoteBottom", self.bottomHasNote() )
         
         # Misaligned Note Correction
         if self.getCurrentCommand() == None and self.__balanceCmd != None:

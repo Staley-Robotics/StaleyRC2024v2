@@ -10,7 +10,6 @@ from wpimath.kinematics import SwerveDrive4Kinematics, SwerveModulePosition, Swe
 from wpimath.system.plant import DCMotor
 from wpimath.units import lbsToKilograms
 
-from ntcore import NetworkTable, NetworkTableInstance, _now
 from ntcore.util import ntproperty
 
 from phoenix6.hardware import Pigeon2
@@ -18,8 +17,10 @@ from phoenix6.hardware import Pigeon2
 # from pathplannerlib.auto import AutoBuilder
 # from pathplannerlib.controller import PPHolonomicDriveController
 # from pathplannerlib.config import RobotConfig, PIDConstants, ModuleConfig
+# from pathplannerlib.logging import PathPlannerLogging
 
 from subsystems.SwerveModule import SwerveModule, SwerveModuleConstants
+from util import FalconLogger
 
 class SwerveDriveConstants:
     kWeightLbs = 120.0
@@ -33,7 +34,6 @@ class SwerveDrive(Subsystem):
     __kinematics:SwerveDrive4Kinematics = None
     __odometry:SwerveDrive4Odometry = None
     __visionOdometry:SwerveDrive4PoseEstimator = None
-    __logging:NetworkTable = None
 
     # Settings
     __DriveFieldRelative = ntproperty( "/Settings/Driver1/FieldRelative", True )
@@ -47,14 +47,14 @@ class SwerveDrive(Subsystem):
     def __init__(self) -> None:
         self.setName( "SwerveDrive" )
 
-        self.__modules = [
-            SwerveModule( 0, 7, 8, 18, -0.235352 ), # 97.471 ),
-            SwerveModule( 1, 1, 2, 12, -0.486572 ), #5.361 ),
-            SwerveModule( 2, 5, 6, 16, -0.673584 ), #298.828 ),
-            SwerveModule( 3, 3, 4, 14, -0.338 ) #60.557 )
-        ]
-
         self.__gyro = Pigeon2( 9, "canivore1" )
+
+        self.__modules = [
+            SwerveModule( 0, 7, 8, 18, 0.235352-0.5 ), # 97.471 ),
+            SwerveModule( 1, 1, 2, 12, 0.486572-0.5 ), #5.361 ),
+            SwerveModule( 2, 5, 6, 16, -0.325439+0.5 ), #298.828 ),325439
+            SwerveModule( 3, 3, 4, 14, 0.334473-0.5 ) #60.557 )0.334473
+        ]
 
         self.__kinematics = SwerveDrive4Kinematics(
             Translation2d( 0.2667, 0.2667 ),
@@ -71,33 +71,24 @@ class SwerveDrive(Subsystem):
         Shuffleboard.getTab( "SwerveDrive" ).add( "SwerveDrive", self )
         self.__field = Field2d()
         SmartDashboard.putData("Field", self.__field)
-
-        self.__logging = NetworkTableInstance.getDefault().getTable("/Logging/SwerveDrive")
-        self.__outGyro = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/Gyro",Rotation2d).publish()
-        self.__outOdometry = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/Odometry",Pose2d).publish()
-        self.__outVisionOdometry = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/OdometryPlusVision",Pose2d).publish()
-        self.__outChassisSpeedsActual = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/ChassisSpeeds/Actual", ChassisSpeeds).publish()
-        self.__outChassisSpeedsTarget = NetworkTableInstance.getDefault().getStructTopic("/RealOutputs/SwerveDrive/ChassisSpeeds/Target", ChassisSpeeds).publish()
-        self.__outSwerveModuleStateActual = NetworkTableInstance.getDefault().getStructArrayTopic("/RealOutputs/SwerveDrive/SwerveModuleStates/Actual", SwerveModuleState).publish()
-        self.__outSwerveModuleStateTarget = NetworkTableInstance.getDefault().getStructArrayTopic("/RealOutputs/SwerveDrive/SwerveModuleStates/Target", SwerveModuleState).publish()
        
         # Path Planner
-        #robotConfig = RobotConfig.fromGUISettings()
-        # moduleConfig = ModuleConfig(
-        #     wheelRadiusMeters = SwerveModuleConstants.Drive.kWheelRadius,
-        #     maxDriveVelocityMPS = SwerveDriveConstants.kMaxSpeed,
-        #     wheelCOF = 1.0,
-        #     driveMotor = DCMotor.NEO(1),
-        #     driveCurrentLimit = 40.0,
-        #     numMotors = 1
-        # )
-        # robotConfig = RobotConfig(
-        #     massKG = lbsToKilograms( SwerveDriveConstants.kWeightLbs ),
-        #     MOI = 6.893,
-        #     moduleConfig = moduleConfig,
-        #     moduleOffsets = self.__kinematics.getModules(),
-        #     trackwidthMeters = None
-        # )
+        # robotConfig = RobotConfig.fromGUISettings()
+        # # moduleConfig = ModuleConfig(
+        # #     wheelRadiusMeters = SwerveModuleConstants.Drive.kWheelRadius,
+        # #     maxDriveVelocityMPS = SwerveDriveConstants.kMaxSpeed,
+        # #     wheelCOF = 1.0,
+        # #     driveMotor = DCMotor.NEO(1),
+        # #     driveCurrentLimit = 40.0,
+        # #     numMotors = 1
+        # # )
+        # # robotConfig = RobotConfig(
+        # #     massKG = lbsToKilograms( SwerveDriveConstants.kWeightLbs ),
+        # #     MOI = 6.893,
+        # #     moduleConfig = moduleConfig,
+        # #     moduleOffsets = self.__kinematics.getModules(),
+        # #     trackwidthMeters = None
+        # # )
         # AutoBuilder.configure(
         #     pose_supplier = self.__odometry.getPose,
         #     reset_pose = self.__odometry.resetPose,
@@ -111,6 +102,10 @@ class SwerveDrive(Subsystem):
         #     should_flip_path = self.shouldFlipPath,
         #     drive_subsystem = self
         # )
+
+        # #PathPlannerLogging.setLogCurrentPoseCallback( self.__field.setRobotPose )
+        # PathPlannerLogging.setLogTargetPoseCallback( self.__field.getObject('targetPose').setPose )
+        # PathPlannerLogging.setLogActivePathCallback( self.__field.getObject('path').setPoses )
 
     def shouldFlipPath(self) -> bool:
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
@@ -133,13 +128,13 @@ class SwerveDrive(Subsystem):
     def __resetOdometry(self, pose:Pose2d) -> None:
         self.__odometry = SwerveDrive4Odometry(
             self.__kinematics,
-            self.getRobotAngle(),
+            self.__gyro.getRotation2d(),
             self.__getModulePositions(),
             pose
         )
         self.__visionOdometry = SwerveDrive4PoseEstimator(
             self.__kinematics,
-            self.getRobotAngle(),
+            self.__gyro.getRotation2d(),
             self.__getModulePositions(),
             pose
         )
@@ -147,10 +142,10 @@ class SwerveDrive(Subsystem):
     # Periodic Loop
     def periodic(self) -> None:
         # Input Logging
-        self.__logging.putValue( "Gyro/yaw_d", self.__gyro.get_yaw().value )
-        self.__logging.putValue( "Gyro/pitch_d", self.__gyro.get_pitch().value  )
-        self.__logging.putValue( "Gyro/roll_d", self.__gyro.get_roll().value  )
-        self.__logging.putBoolean( "OdometryLock", self.__odometryLock )
+        FalconLogger.logInput( "SwerveDrive/Gyro/yaw_d", self.__gyro.get_yaw().value )
+        FalconLogger.logInput( "SwerveDrive/Gyro/pitch_d", self.__gyro.get_pitch().value  )
+        FalconLogger.logInput( "SwerveDrive/Gyro/roll_d", self.__gyro.get_roll().value  )
+        #FalconLogger.logInput( "SwerveDrive/OdometryLock", self.__odometryLock )
 
         # Run Subsystem: Set New State To Subsystem
         if RobotState.isDisabled():
@@ -168,38 +163,27 @@ class SwerveDrive(Subsystem):
 
         if not self.__odometryLock:
             pose = self.__odometry.update(
-                self.getRobotAngle(),
+                self.__gyro.getRotation2d(),
                 self.__getModulePositions()
             )
 
             # Update Vision Odometry
             vPose = self.__visionOdometry.update(
-                self.getRobotAngle(),
+                self.__gyro.getRotation2d(),
                 self.__getModulePositions()
             )
         
         # Dashboarding -- Updated Odometry to only use Blue Relative
         self.__field.setRobotPose( pose )
         self.__field.getObject( "BlueVisionPose" ).setPose( vPose )
-        # match DriverStation.getAlliance():
-        #     case DriverStation.Alliance.kBlue:
-        #         self.__field.setRobotPose( pose )
-        #         self.__field.getObject( "Vision" ).setPose( vPose )
-        # if self.shouldFlipPath():
-        #     rPose = Pose2d( x=16.523 - pose.X(), y=8.013 - pose.Y(), angle= pose.rotation().radians() - math.pi )
-        #     rvPose = Pose2d( x=16.523 - vPose.X(), y=8.013 - vPose.Y(), angle= vPose.rotation().radians() - math.pi )
-        #     self.__field.getObject( "RedPose" ).setPose( vPose )
-        #     self.__field.getObject( "RedVisionPose" ).setPose( rvPose )
        
         # Output Logging
-        ntTime = _now()
-        self.__outGyro.set( self.__gyro.getRotation2d(), ntTime )
-        self.__outOdometry.set( pose, ntTime )
-        self.__outVisionOdometry.set( vPose, ntTime )
-        self.__outSwerveModuleStateActual.set( self.__getModuleStates(), ntTime )
-        self.__outSwerveModuleStateTarget.set( self.__setpointStates, ntTime )
-        self.__outChassisSpeedsActual.set( self.getChassisSpeeds(), ntTime )
-        self.__outChassisSpeedsTarget.set( self.__setpoint, ntTime )
+        FalconLogger.logOutput( "SwerveDrive/Odometry", pose )
+        FalconLogger.logOutput( "SwerveDrive/OdometryPlusVision", vPose )
+        FalconLogger.logOutput( "SwerveDrive/ChassisSpeeds/Actual", self.getChassisSpeeds() )
+        FalconLogger.logOutput( "SwerveDrive/ChassisSpeeds/Target", self.__setpoint )
+        FalconLogger.logOutput( "SwerveDrive/SwerveModuleStates/Actual", self.__getModuleStates() )
+        FalconLogger.logOutput( "SwerveDrive/SwerveModuleStates/Target", self.__setpoint )
 
     # Simulation Periodic Loop
     def simulationPeriodic(self) -> None:
@@ -235,7 +219,7 @@ class SwerveDrive(Subsystem):
         omegaSpeed = omega * self.__DriveMaxRotationPercent * SwerveDriveConstants.kRotationSpeed
 
         cSpeed = (
-            ChassisSpeeds.fromFieldRelativeSpeeds( xSpeed, ySpeed, omegaSpeed, self.__gyro.getRotation2d() ) # self.getRobotAngle() )
+            ChassisSpeeds.fromFieldRelativeSpeeds( xSpeed, ySpeed, omegaSpeed, self.getRobotAngle() )
             if self.__DriveFieldRelative
             else ChassisSpeeds( xSpeed, ySpeed, omegaSpeed )
         )

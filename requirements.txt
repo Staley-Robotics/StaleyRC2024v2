@@ -2,7 +2,7 @@
 robotpy-installer==2025.0.0b3
 
 ### RobotPy
-robotpy==2025.0.0b2
+robotpy==2025.0.0b3
 robotpy[commands2]
 #robotpy[pathplannerlib]
 #robotpy[phoenix6]

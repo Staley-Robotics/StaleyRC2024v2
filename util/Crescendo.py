@@ -1,8 +1,10 @@
 from enum import Enum, auto
 from typing import Callable
+
 from commands2 import Subsystem
 from ntcore import NetworkTableInstance, NetworkTable
-from subsystems import PivotPositions
+
+from subsystems.Pivot import PivotPositions
 
 class DriveMode(Enum):
     NONE = auto()

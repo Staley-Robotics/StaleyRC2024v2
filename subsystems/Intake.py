@@ -13,6 +13,8 @@ from phoenix6.controls import DutyCycleOut
 from phoenix6.configs import TalonFXConfiguration, MotorOutputConfigs
 from phoenix6.signals.spn_enums import InvertedValue, NeutralModeValue
 
+from util import FalconLogger
+
 class IntakeOptions:
     EJECT:float = -1.0
     STOP:float = 0.0
@@ -28,7 +30,6 @@ class Intake(Subsystem):
     __topMotor:TalonFX = None
     __bottomMotor:TalonFX = None
     __irBeam:DigitalInput = None
-    __logger:NetworkTable = None
 
     __setpoint:float = 0.0
     __brake:bool = False
@@ -59,21 +60,19 @@ class Intake(Subsystem):
 
         # Logging
         Shuffleboard.getTab( "Intake" ).add( "Intake", self )
-        self.__logger = NetworkTableInstance.getDefault().getTable("/Logging/Intake")
-        self.__outputs = NetworkTableInstance.getDefault().getTable("/RealOutputs/Intake")
 
     # Periodic Loop
     def periodic(self) -> None:
         # Logging: Write Current Subsystem State
-        self.__logger.putNumber( "MotorTopInput", self.__topMotor.get() )
-        self.__logger.putNumber( "MotorTopOutput", self.__topMotor.get_motor_voltage().value )
-        self.__logger.putNumber( "MotorTopPosition_r", self.__topMotor.get_position().value )
-        self.__logger.putNumber( "MotorTopVelocity_rps", self.__topMotor.get_velocity().value )
-        self.__logger.putNumber( "MotorBottomInput", self.__bottomMotor.get() )
-        self.__logger.putNumber( "MotorBottomOutput", self.__bottomMotor.get_motor_voltage().value )
-        self.__logger.putNumber( "MotorBottomPosition_r", self.__bottomMotor.get_position().value )
-        self.__logger.putNumber( "MotorBottomVelocity_rps", self.__bottomMotor.get_velocity().value )
-        self.__logger.putBoolean( "Sensor", self.__irBeam.get() )
+        FalconLogger.logInput( "Intake/MotorTopInput", self.__topMotor.get() )
+        FalconLogger.logInput( "Intake/MotorTopOutput", self.__topMotor.get_motor_voltage().value )
+        FalconLogger.logInput( "Intake/MotorTopPosition_r", self.__topMotor.get_position().value )
+        FalconLogger.logInput( "Intake/MotorTopVelocity_rps", self.__topMotor.get_velocity().value )
+        FalconLogger.logInput( "Intake/MotorBottomInput", self.__bottomMotor.get() )
+        FalconLogger.logInput( "Intake/MotorBottomOutput", self.__bottomMotor.get_motor_voltage().value )
+        FalconLogger.logInput( "Intake/MotorBottomPosition_r", self.__bottomMotor.get_position().value )
+        FalconLogger.logInput( "Intake/MotorBottomVelocity_rps", self.__bottomMotor.get_velocity().value )
+        FalconLogger.logInput( "Intake/Sensor", self.__irBeam.get() )
 
         # Run Subsystem: Set New State To Subsystem
         if RobotState.isDisabled():
@@ -82,9 +81,9 @@ class Intake(Subsystem):
         
         # Logging: Write Post Operation Information
         cmdName = self.getCurrentCommand().getName() if self.getCurrentCommand() != None else "None"
-        self.__outputs.putString( "Command", cmdName )
-        self.__outputs.putNumber( "Setpoint", self.getSetpoint() )
-        self.__outputs.putBoolean( "HasNote", self.hasNote() )
+        FalconLogger.logInput( "Intake/Command", cmdName )
+        FalconLogger.logInput( "Intake/Setpoint", self.getSetpoint() )
+        FalconLogger.logInput( "Intake/HasNote", self.hasNote() )
 
     def simulationPeriodic(self) -> None:
         # Motor Position and Velocity

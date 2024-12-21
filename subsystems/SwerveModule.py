@@ -1,22 +1,21 @@
 import typing
 import math
 
-from wpilib import RobotState, RobotBase
+from wpilib import RobotBase
 from wpilib.shuffleboard import Shuffleboard
-from wpimath.controller import PIDController, ProfiledPIDController, ProfiledPIDControllerRadians, SimpleMotorFeedforwardMeters, SimpleMotorFeedforwardRadians
+from wpimath.controller import PIDController, ProfiledPIDControllerRadians, SimpleMotorFeedforwardMeters, SimpleMotorFeedforwardRadians
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 from wpimath import applyDeadband
-from wpimath.trajectory import TrapezoidProfile, TrapezoidProfileRadians
 from wpimath.system.plant import DCMotor
-from wpimath.units import rotationsPerMinuteToRadiansPerSecond, rotationsToRadians, radiansToRotations, kSecondsPerMinute
-from ntcore import NetworkTable, NetworkTableInstance
+from wpimath.units import rotationsPerMinuteToRadiansPerSecond, rotationsToRadians, radiansToRotations, kSecondsPerMinute, radians
 
-from rev import SparkMax, SparkRelativeEncoder, SparkMaxSim, SparkRelativeEncoderSim, SparkMaxConfig
+from rev import SparkMax, SparkRelativeEncoder, SparkMaxSim, SparkMaxConfig
 from phoenix6.hardware import CANcoder
 from phoenix6.configs import CANcoderConfiguration
-from phoenix6.signals.spn_enums import SensorDirectionValue #, AbsoluteSensorRangeValue
-from phoenix6.sim import CANcoderSimState
+from phoenix6.signals.spn_enums import SensorDirectionValue
+
+from util import FalconLogger
 
 class SwerveModuleConstants:
     class Drive:
@@ -30,7 +29,7 @@ class SwerveModuleConstants:
     
     class Turn:
         kGearRatio:float = 1 / (150/7)
-        kP:float = 10.0 # 25.0
+        kP:float = 2.5 # 25.0
         kI:float = 0
         kD:float = 0
         kMaxAngularVelocity:float = math.pi
@@ -79,13 +78,11 @@ class SwerveModule:
         turnMotorCfg = turnMotorCfg.secondaryCurrentLimit( 20.0 )
         turnMotorCfg = turnMotorCfg.inverted( True )
         self.__turnMotor = SparkMax( turnId, SparkMax.MotorType.kBrushless )
-        self.__turnMotor.configure( turnMotorCfg, SparkMax.ResetMode.kResetSafeParameters, SparkMax.PersistMode.kPersistParameters )
-        
+        self.__turnMotor.configure( turnMotorCfg, SparkMax.ResetMode.kResetSafeParameters, SparkMax.PersistMode.kPersistParameters )      
         self.__turnMotorEncoder = self.__turnMotor.getEncoder()
         
         # Turn Encoder (CANcoder)
         turnEncoderCfg = CANcoderConfiguration()
-        #turnEncoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
         turnEncoderCfg.magnet_sensor.absolute_sensor_discontinuity_point = 0.5
         turnEncoderCfg.magnet_sensor.sensor_direction = SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
         if not RobotBase.isSimulation(): turnEncoderCfg.magnet_sensor.magnet_offset = encoderOffset
@@ -94,7 +91,6 @@ class SwerveModule:
 
         # Turn PID
         self.__turnPid = PIDController( SwerveModuleConstants.Turn.kP, SwerveModuleConstants.Turn.kI, SwerveModuleConstants.Turn.kD )
-        #self.__turnPid = ProfiledPIDControllerRadians( SwerveModuleConstants.Turn.kP, SwerveModuleConstants.Turn.kI, SwerveModuleConstants.Turn.kD, TrapezoidProfileRadians.Constraints( SwerveModuleConstants.Turn.kMaxAngularVelocity, SwerveModuleConstants.Turn.kMaxAngularAcceleration ) )
         self.__turnPid.enableContinuousInput( -math.pi, math.pi )
         self.__turnPid.setTolerance( 0.150 )
         self.__turnFF = SimpleMotorFeedforwardRadians( SwerveModuleConstants.Turn.kS, SwerveModuleConstants.Turn.kV )
@@ -117,17 +113,29 @@ class SwerveModule:
         self.__turnEncoderSim = self.__turnEncoder.sim_state
 
         # Default Desired State
-        self.__setpoint = SwerveModuleState(0, Rotation2d(0))
+        self.__setpoint = SwerveModuleState(0, Rotation2d(0.0))
 
         # Dashboards
         Shuffleboard.getTab( "SwerveDrive" ).add( f"{moduleId}-DrivePid", self.__drivePid )
         Shuffleboard.getTab( "SwerveDrive" ).add( f"{moduleId}-TurnPid", self.__turnPid )
 
-        # Logging
-        self.__logger = NetworkTableInstance.getDefault().getTable( f"/Logging/SwerveDrive/SwerveModule/{self.moduleId}" )
-
     def run(self) -> None:
-        # Drive Motor
+        # Logging Current State
+        logPath = f"SwerveDrive/SwerveModule/{self.moduleId}"
+        FalconLogger.logInput( f"{logPath}/DriveInput", self.__driveMotor.get() )
+        FalconLogger.logInput( f"{logPath}/DriveOutput", self.__driveMotor.getAppliedOutput() )
+        FalconLogger.logInput( f"{logPath}/DrivePosition_r", self.__driveEncoder.getPosition() )
+        FalconLogger.logInput( f"{logPath}/DriveVelocity_rpm", self.__driveEncoder.getVelocity() )
+
+        FalconLogger.logInput( f"{logPath}/TurnInput", self.__turnMotor.get() )
+        FalconLogger.logInput( f"{logPath}/TurnOutput", self.__turnMotor.getAppliedOutput() )
+        FalconLogger.logInput( f"{logPath}/TurnPosition_r", self.__turnMotorEncoder.getPosition() )
+        FalconLogger.logInput( f"{logPath}/TurnVelocity_rpm", self.__turnMotorEncoder.getVelocity() )
+
+        FalconLogger.logInput( f"{logPath}/EncoderPosition_r", self.__turnEncoder.get_absolute_position().value )
+        FalconLogger.logInput( f"{logPath}/EncoderVelocity_rps", self.__turnEncoder.get_velocity().value )
+
+        # Set Drive Motor
         driveVelocity = self.__getDriveVelocity( self.__driveEncoder.getVelocity() )
         driveOutput = self.__drivePid.calculate( driveVelocity, self.__setpoint.speed )
         driveOutputFF = self.__driveFF.calculate( self.__setpoint.speed )
@@ -135,26 +143,12 @@ class SwerveModule:
         if RobotBase.isSimulation() and abs( driveOut ) < 0.12: driveOut = 0.0
         self.__driveMotor.setVoltage( driveOut )
 
-        # Turn Motor
+        # Set Turn Motor
         turnOutput = self.__turnPid.calculate( self.__getTurnEncoderRadians(), self.__setpoint.angle.radians() )
         turnOutputFF = self.__turnFF.calculate( self.__setpoint.angle.radians() )
         turnOut = turnOutput + turnOutputFF
         if RobotBase.isSimulation() and abs( turnOut ) < 0.12: turnOut = 0.0
         self.__turnMotor.setVoltage( turnOut )
-
-        # Logging
-        self.__logger.putNumber( "DriveInput", self.__driveMotor.get() )
-        self.__logger.putNumber( "DriveOutput", self.__driveMotor.getAppliedOutput() )
-        self.__logger.putNumber( "DrivePosition_r", self.__driveEncoder.getPosition() )
-        self.__logger.putNumber( "DriveVelocity_rpm", self.__driveEncoder.getVelocity() )
-
-        self.__logger.putNumber( "TurnInput", self.__turnMotor.get() )
-        self.__logger.putNumber( "TurnOutput", self.__turnMotor.getAppliedOutput() )
-        self.__logger.putNumber( "TurnPosition_r", self.__turnMotorEncoder.getPosition() )
-        self.__logger.putNumber( "TurnVelocity_rpm", self.__turnMotorEncoder.getVelocity() )
-
-        self.__logger.putNumber( "EncoderPosition_r", self.__turnEncoder.get_position().value )
-        self.__logger.putNumber( "EncoderVelocity_rps", self.__turnEncoder.get_velocity().value )
 
     def runSim(self) -> None:
         # Drive Motor Position and Velocity
@@ -210,7 +204,7 @@ class SwerveModule:
         return metersPerSec
 
     def __getTurnEncoderRotation(self) -> Rotation2d:
-        return Rotation2d.fromRotations( self.__turnEncoder.get_position(False).value_as_double )
+        return Rotation2d.fromRotations( self.__turnEncoder.get_absolute_position().value_as_double )
 
-    def __getTurnEncoderRadians(self) -> float:
-        return rotationsToRadians( self.__turnEncoder.get_position(False).value_as_double )
+    def __getTurnEncoderRadians(self) -> radians:
+        return rotationsToRadians( self.__turnEncoder.get_absolute_position().value_as_double )

@@ -2,7 +2,6 @@ import math
 
 from commands2 import PIDSubsystem
 
-from ntcore import NetworkTableInstance, NetworkTable
 from wpilib import SmartDashboard, RobotBase, RobotState, Mechanism2d, Color8Bit, RobotController
 from wpilib.shuffleboard import Shuffleboard
 from wpimath.controller import PIDController, SimpleMotorFeedforwardRadians
@@ -13,6 +12,8 @@ from phoenix6.hardware import TalonFX, CANcoder
 from phoenix6.controls import VoltageOut, DutyCycleOut
 from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
 from phoenix6.signals.spn_enums import InvertedValue, NeutralModeValue, SensorDirectionValue #, AbsoluteSensorRangeValue
+
+from util.FalconLogger import FalconLogger
 
 class PivotPositions:
     MAX = 55.041
@@ -42,7 +43,6 @@ class Pivot(PIDSubsystem):
     # Motors
     __motor:TalonFX = None
     __encoder:CANcoder = None
-    __logger:NetworkTable = None
 
     def __init__(self):
         # Motor
@@ -89,17 +89,14 @@ class Pivot(PIDSubsystem):
         Shuffleboard.getTab( "Pivot" ).add( "PivotMech", self.mech )
         Shuffleboard.getTab( "Pivot" ).add( "PivotPid", self._controller )
 
-        self.__logger:NetworkTable = NetworkTableInstance.getDefault().getTable( "/Logging/Pivot" )
-        self.__measured:NetworkTable = NetworkTableInstance.getDefault().getTable( "/RealOutputs/Pivot" )
-
     def periodic(self) -> None:
         # Input Logging
-        self.__logger.putNumber( "MotorInput", self.__motor.get() )
-        self.__logger.putNumber( "MotorOutput", self.__motor.get_motor_voltage().value )
-        self.__logger.putNumber( "MotorPosition_r", self.__motor.get_position().value )
-        self.__logger.putNumber( "MotorVelocity_rps", self.__motor.get_velocity().value )
-        self.__logger.putNumber( "EncoderPosition_r", self.__encoder.get_position().value )
-        self.__logger.putNumber( "EncoderVelocity_rps", self.__encoder.get_velocity().value )
+        FalconLogger.logInput( "Pivot/MotorInput", self.__motor.get() )
+        FalconLogger.logInput( "Pivot/MotorOutput", self.__motor.get_motor_voltage().value )
+        FalconLogger.logInput( "Pivot/MotorPosition_r", self.__motor.get_position().value )
+        FalconLogger.logInput( "Pivot/MotorVelocity_rps", self.__motor.get_velocity().value )
+        FalconLogger.logInput( "Pivot/EncoderPosition_r", self.__encoder.get_position().value )
+        FalconLogger.logInput( "Pivot/EncoderVelocity_rps", self.__encoder.get_velocity().value )
         
         # Run
         if RobotState.isDisabled():
@@ -112,8 +109,8 @@ class Pivot(PIDSubsystem):
         self.mechBack.setAngle( rotationsToDegrees( self.getMeasurement() ) + 180 - offset )
 
         # Output Logging
-        self.__measured.putNumber( "TargetAngle", rotationsToDegrees( self.getSetpoint() ) )
-        self.__measured.putNumber( "ActualAngle", rotationsToDegrees( self.getMeasurement() ) )
+        FalconLogger.logOutput( "Pivot/TargetAngle", rotationsToDegrees( self.getSetpoint() ) )
+        FalconLogger.logOutput( "Pivot/ActualAngle", rotationsToDegrees( self.getMeasurement() ) )
 
     def simulationPeriodic(self) -> None:
         # Simulation Motor Deadband

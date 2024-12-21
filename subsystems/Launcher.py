@@ -1,4 +1,4 @@
-from commands2 import Subsystem, PIDSubsystem
+from commands2 import PIDSubsystem
 
 from wpilib import RobotState
 from wpilib.shuffleboard import Shuffleboard
@@ -6,12 +6,13 @@ from wpilib.simulation import DCMotorSim
 from wpimath.controller import PIDController, SimpleMotorFeedforwardRadians
 from wpimath.system.plant import DCMotor, LinearSystemId
 from wpimath.units import radiansToRotations, rotationsToRadians
-from ntcore import NetworkTable, NetworkTableInstance, util
 
 from phoenix6.hardware import TalonFX
 from phoenix6.configs import TalonFXConfiguration
 from phoenix6.configs.talon_fx_configs import InvertedValue
 from phoenix6.controls import VoltageOut
+
+from util import FalconLogger
 
 class LauncherOptions:
     AMP:float = 25.0
@@ -40,8 +41,6 @@ class Launcher(PIDSubsystem):
     __leftMotor:TalonFX = None
     __rightMotor:TalonFX = None
     __feedFwd:SimpleMotorFeedforwardRadians = None
-    __inputLogger:NetworkTable = None
-    __outputLogger:NetworkTable = None
 
     # Initialization
     def __init__(self) -> None:
@@ -73,10 +72,6 @@ class Launcher(PIDSubsystem):
         )
         self.enable()
 
-        # Logging
-        self.__inputLogger = NetworkTableInstance.getDefault().getTable("/Logging/Launcher")
-        self.__outputLogger = NetworkTableInstance.getDefault().getTable("/RealOutputs/Launcher")
-
         # Dashboard
         Shuffleboard.getTab( "Launcher" ).add( "Launcher", self )
         Shuffleboard.getTab( "Launcher" ).add( "LauncherPid", self.getController() )
@@ -84,14 +79,14 @@ class Launcher(PIDSubsystem):
     # Periodic Loop
     def periodic(self) -> None:
         # Input Logging
-        self.__inputLogger.putNumber( "Left/MotorInput", self.__leftMotor.get() )
-        self.__inputLogger.putNumber( "Left/MotorOutput", self.__leftMotor.get_motor_voltage().value )
-        self.__inputLogger.putNumber( "Left/MotorPosition_r", self.__leftMotor.get_position().value )
-        self.__inputLogger.putNumber( "Left/MotorVelocity_rps", self.__leftMotor.get_velocity().value )
-        self.__inputLogger.putNumber( "Right/MotorInput", self.__rightMotor.get() )
-        self.__inputLogger.putNumber( "Right/MotorOutput", self.__rightMotor.get_motor_voltage().value )
-        self.__inputLogger.putNumber( "Right/MotorPosition_r", self.__rightMotor.get_position().value )
-        self.__inputLogger.putNumber( "Right/MotorVelocity_rps", self.__rightMotor.get_velocity().value )
+        FalconLogger.logInput( "Launcher/Left/MotorInput", self.__leftMotor.get() )
+        FalconLogger.logInput( "Launcher/Left/MotorOutput", self.__leftMotor.get_motor_voltage().value )
+        FalconLogger.logInput( "Launcher/Left/MotorPosition_r", self.__leftMotor.get_position().value )
+        FalconLogger.logInput( "Launcher/Left/MotorVelocity_rps", self.__leftMotor.get_velocity().value )
+        FalconLogger.logInput( "Launcher/Right/MotorInput", self.__rightMotor.get() )
+        FalconLogger.logInput( "Launcher/Right/MotorOutput", self.__rightMotor.get_motor_voltage().value )
+        FalconLogger.logInput( "Launcher/Right/MotorPosition_r", self.__rightMotor.get_position().value )
+        FalconLogger.logInput( "Launcher/Right/MotorVelocity_rps", self.__rightMotor.get_velocity().value )
 
         # Run Subsystem: Set New State To Subsystem
         if RobotState.isDisabled():
@@ -99,9 +94,9 @@ class Launcher(PIDSubsystem):
         super().periodic()
         
         # Output Logging
-        self.__outputLogger.putNumber( "ActualSpeed", self.getMeasurement() )
-        self.__outputLogger.putNumber( "TargetSpeed", self.getSetpoint() )
-        self.__outputLogger.putBoolean( "AtSetpoint", self.atSetpoint() )
+        FalconLogger.logOutput( "ActualSpeed", self.getMeasurement() )
+        FalconLogger.logOutput( "TargetSpeed", self.getSetpoint() )
+        FalconLogger.logOutput( "AtSetpoint", self.atSetpoint() )
 
     # Simulation Periodic
     def simulationPeriodic(self):      
@@ -146,7 +141,6 @@ class Launcher(PIDSubsystem):
         # Placeholder: Feed Forward
         ffVolts = self.__feedFwd.calculate( rotationsToRadians( setpoint ) )
         motorOutput = output + ffVolts
-        self.__outputLogger.putNumber( "motorOutput", motorOutput )
         self.__rightMotor.set_control( VoltageOut(motorOutput) )
         self.__leftMotor.set_control( VoltageOut( motorOutput * LauncherConstants.leftOutputPercent ) )
 

@@ -11,14 +11,14 @@ from ntcore.util import ntproperty
 from commands2 import Subsystem
 
 class VisionConstants:
-    StdDevX = ntproperty( "Settings/Vision/StdDevX", 1.0 )
-    StdDevY = ntproperty( "Settings/Vision/StdDevY", 1.0 )
-    StdDevR = ntproperty( "Settings/Vision/StdDevR", 1.0 )
-    LockedInRange = ntproperty( "Settings/Vision/LockedInRange", 1.0 )
+    StdDevX = 1.0 #ntproperty( "Settings/Vision/StdDevX", 1.0 )
+    StdDevY = 1.0 #ntproperty( "Settings/Vision/StdDevY", 1.0 )
+    StdDevR = 1.0 #ntproperty( "Settings/Vision/StdDevR", 1.0 )
+    LockedInRange = 1.0 #ntproperty( "Settings/Vision/LockedInRange", 1.0 )
 
 class Vision(Subsystem):
     def __init__(self, name:str, swerveOdometry:typing.Callable[[], SwerveDrive4PoseEstimator]):
-        self.__offline = ntproperty( f"Settings/Vision/{name}/Offline", False )
+        self.__offline = False #ntproperty( f"Settings/Vision/{name}/Offline", False )
 
         self.__getOdometryFromSwerve = swerveOdometry
         self.__useLockedInRange:bool = False
