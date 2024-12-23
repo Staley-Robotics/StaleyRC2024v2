@@ -9,7 +9,8 @@ from commands import *
 from subsystems import SwerveDrive
 
 # Team Utility Imports
-from util import DefaultCommand, ShredderState, Crescendo
+from util import DefaultCommand
+from util.Crescendo import *
 
 class DefaultSwerveDrive(DefaultCommand):
     def __init__(

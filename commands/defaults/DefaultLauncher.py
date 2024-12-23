@@ -9,7 +9,8 @@ from commands import *
 from subsystems import Launcher
 
 # Team Utility Imports
-from util import DefaultCommand, ShredderState, Crescendo
+from util import DefaultCommand
+from util.Crescendo import *
 
 class DefaultLauncher(DefaultCommand):
     __autoStart:bool = True

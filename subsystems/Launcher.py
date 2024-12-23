@@ -94,9 +94,9 @@ class Launcher(PIDSubsystem):
         super().periodic()
         
         # Output Logging
-        FalconLogger.logOutput( "ActualSpeed", self.getMeasurement() )
-        FalconLogger.logOutput( "TargetSpeed", self.getSetpoint() )
-        FalconLogger.logOutput( "AtSetpoint", self.atSetpoint() )
+        FalconLogger.logOutput( "Launcher/ActualSpeed", self.getMeasurement() )
+        FalconLogger.logOutput( "Launcher/TargetSpeed", self.getSetpoint() )
+        FalconLogger.logOutput( "Launcher/AtSetpoint", self.atSetpoint() )
 
     # Simulation Periodic
     def simulationPeriodic(self):      
@@ -105,15 +105,15 @@ class Launcher(PIDSubsystem):
         self.__simLeftMotor.setInputVoltage( leftVoltage )
         self.__simLeftMotor.update(0.02)
         self.__leftMotor.sim_state.set_raw_rotor_position( radiansToRotations( self.__simLeftMotor.getAngularPosition() ) )
-        self.__leftMotor.sim_state.set_rotor_velocity( radiansToRotations( self.__simLeftMotor.getAngularAcceleration() ) )
-        self.__leftMotor.sim_state.set_rotor_acceleration( radiansToRotations( self.__simLeftMotor.getAngularPosition() ) )
+        self.__leftMotor.sim_state.set_rotor_velocity( radiansToRotations( self.__simLeftMotor.getAngularVelocity() ) )
+        self.__leftMotor.sim_state.set_rotor_acceleration( radiansToRotations( self.__simLeftMotor.getAngularAcceleration() ) )
 
         rightVoltage = self.__rightMotor.sim_state.motor_voltage
         self.__simRightMotor.setInputVoltage( rightVoltage )
         self.__simRightMotor.update(0.02)
         self.__rightMotor.sim_state.set_raw_rotor_position( radiansToRotations( self.__simRightMotor.getAngularPosition() ) )
-        self.__rightMotor.sim_state.set_rotor_velocity( radiansToRotations( self.__simRightMotor.getAngularAcceleration() ) )
-        self.__rightMotor.sim_state.set_rotor_acceleration( radiansToRotations( self.__simRightMotor.getAngularPosition() ) )
+        self.__rightMotor.sim_state.set_rotor_velocity( radiansToRotations( self.__simRightMotor.getAngularVelocity() ) )
+        self.__rightMotor.sim_state.set_rotor_acceleration( radiansToRotations( self.__simRightMotor.getAngularAcceleration() ) )
 
         # Motor Position and Velocity
         # right_velocity = LauncherConstants.FalconSim.kMaxRps * (self.__rightMotor.sim_state.motor_voltage / 12.0 )

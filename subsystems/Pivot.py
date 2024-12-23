@@ -13,7 +13,7 @@ from phoenix6.controls import VoltageOut, DutyCycleOut
 from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
 from phoenix6.signals.spn_enums import InvertedValue, NeutralModeValue, SensorDirectionValue #, AbsoluteSensorRangeValue
 
-from util.FalconLogger import FalconLogger
+from util import FalconLogger
 
 class PivotPositions:
     MAX = 55.041

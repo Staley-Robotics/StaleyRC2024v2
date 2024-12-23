@@ -4,7 +4,7 @@ from commands2 import SelectCommand, cmd
 
 from commands import LauncherStart
 from subsystems import Launcher, LauncherOptions
-from util import ShredderTarget, Crescendo, ShredderState
+from util.Crescendo import *
 
 class LauncherToTarget(SelectCommand):
     __prevTarget:ShredderTarget

@@ -2,7 +2,7 @@
 from typing import Hashable, Callable, Dict
 
 # WPI Imports
-from commands2 import cmd, SelectCommand, Command, Subsystem
+from commands2 import cmd, SelectCommand, Command
 
 class DefaultCommand(SelectCommand):
     __prevState:Hashable = None

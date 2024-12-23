@@ -1,6 +1,6 @@
 from commands2 import Command
 from subsystems import Intake, IntakeOptions
-from util import *
+from util.Crescendo import *
 
 class IntakePickup(Command):
     # Initialization

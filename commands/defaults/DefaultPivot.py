@@ -9,7 +9,8 @@ from commands import *
 from subsystems import Pivot, PivotPositions
 
 # Team Utility Imports
-from util import * #DefaultCommand, ShredderState, Crescendo
+from util import *
+from util.Crescendo import *
 
 class DefaultPivot(DefaultCommand):
     def __init__(

@@ -9,7 +9,8 @@ from commands import *
 from subsystems import Intake
 
 # Team Utility Imports
-from util import DefaultCommand, ShredderState, Crescendo
+from util import DefaultCommand
+from util.Crescendo import *
 
 class DefaultIntake(DefaultCommand):
     def __init__(

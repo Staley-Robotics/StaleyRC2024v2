@@ -4,7 +4,7 @@ from commands2 import SelectCommand, cmd
 
 from commands import PivotToPosition
 from subsystems import Pivot, PivotPositions
-from util import ShredderTarget, Crescendo
+from util.Crescendo import *
 
 class PivotToTarget(SelectCommand):
     def __init__(

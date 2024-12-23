@@ -10,6 +10,7 @@ from commands import *
 from commands.defaults import *
 from subsystems import *
 from util import *
+from util.Crescendo import *
 
 class RobotContainer:
     # Variable Declaration

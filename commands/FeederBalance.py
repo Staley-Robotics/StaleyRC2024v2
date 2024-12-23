@@ -1,7 +1,7 @@
 from commands2 import Command
 
 from subsystems import Feeder, FeederModes
-from util import *
+from util.Crescendo import *
 
 class FeederBalance(Command):
     def __init__(self, feeder:Feeder):

@@ -164,3 +164,4 @@ networktables*.json
 simgui*.json
 ctre_sim/
 .wpilib/
+.logs/

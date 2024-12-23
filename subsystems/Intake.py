@@ -81,9 +81,9 @@ class Intake(Subsystem):
         
         # Logging: Write Post Operation Information
         cmdName = self.getCurrentCommand().getName() if self.getCurrentCommand() != None else "None"
-        FalconLogger.logInput( "Intake/Command", cmdName )
-        FalconLogger.logInput( "Intake/Setpoint", self.getSetpoint() )
-        FalconLogger.logInput( "Intake/HasNote", self.hasNote() )
+        FalconLogger.logOutput( "Intake/Command", cmdName )
+        FalconLogger.logOutput( "Intake/Setpoint", self.getSetpoint() )
+        FalconLogger.logOutput( "Intake/HasNote", self.hasNote() )
 
     def simulationPeriodic(self) -> None:
         # Motor Position and Velocity

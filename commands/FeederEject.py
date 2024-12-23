@@ -2,7 +2,7 @@ from commands2 import Command
 from wpilib import Timer
 
 from subsystems import Feeder, FeederModes
-from util.SharedConstants import SharedConstants
+from util import SharedConstants
 
 class FeederEject(Command):
     # Initialization

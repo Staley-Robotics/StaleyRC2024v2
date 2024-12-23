@@ -9,7 +9,8 @@ from commands import *
 from subsystems import Feeder
 
 # Team Utility Imports
-from util import DefaultCommand, ShredderState, Crescendo
+from util import *
+from util.Crescendo import *
 
 class DefaultFeeder(DefaultCommand):
     def __init__(
