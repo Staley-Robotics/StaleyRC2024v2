@@ -14,10 +14,14 @@ from ntcore.util import ntproperty
 
 from phoenix6.hardware import Pigeon2
 
-# from pathplannerlib.auto import AutoBuilder
-# from pathplannerlib.controller import PPHolonomicDriveController
-# from pathplannerlib.config import RobotConfig, PIDConstants, ModuleConfig
-# from pathplannerlib.logging import PathPlannerLogging
+try:
+    from pathplannerlib.auto import AutoBuilder
+    from pathplannerlib.controller import PPHolonomicDriveController
+    from pathplannerlib.config import RobotConfig, PIDConstants, ModuleConfig
+    from pathplannerlib.logging import PathPlannerLogging
+except Exception as e:
+    print( "ERROR! SwerveDrive PathPlanner Includes")
+    print( e )
 
 from subsystems.SwerveModule import SwerveModule, SwerveModuleConstants
 from util import FalconLogger
@@ -73,39 +77,43 @@ class SwerveDrive(Subsystem):
         SmartDashboard.putData("Field", self.__field)
        
         # Path Planner
-        # robotConfig = RobotConfig.fromGUISettings()
-        # # moduleConfig = ModuleConfig(
-        # #     wheelRadiusMeters = SwerveModuleConstants.Drive.kWheelRadius,
-        # #     maxDriveVelocityMPS = SwerveDriveConstants.kMaxSpeed,
-        # #     wheelCOF = 1.0,
-        # #     driveMotor = DCMotor.NEO(1),
-        # #     driveCurrentLimit = 40.0,
-        # #     numMotors = 1
-        # # )
-        # # robotConfig = RobotConfig(
-        # #     massKG = lbsToKilograms( SwerveDriveConstants.kWeightLbs ),
-        # #     MOI = 6.893,
-        # #     moduleConfig = moduleConfig,
-        # #     moduleOffsets = self.__kinematics.getModules(),
-        # #     trackwidthMeters = None
-        # # )
-        # AutoBuilder.configure(
-        #     pose_supplier = self.__odometry.getPose,
-        #     reset_pose = self.__odometry.resetPose,
-        #     robot_relative_speeds_supplier = self.getChassisSpeeds,
-        #     output = lambda speeds, feedforwards: self.runChassisSpeeds(speeds),
-        #     controller = PPHolonomicDriveController(
-        #         PIDConstants(5.0, 0.0, 0.0),
-        #         PIDConstants(5.0, 0.0, 0.0)
-        #     ),
-        #     robot_config = robotConfig,
-        #     should_flip_path = self.shouldFlipPath,
-        #     drive_subsystem = self
-        # )
+        try:
+            robotConfig = RobotConfig.fromGUISettings()
+            # moduleConfig = ModuleConfig(
+            #     wheelRadiusMeters = SwerveModuleConstants.Drive.kWheelRadius,
+            #     maxDriveVelocityMPS = SwerveDriveConstants.kMaxSpeed,
+            #     wheelCOF = 1.0,
+            #     driveMotor = DCMotor.NEO(1),
+            #     driveCurrentLimit = 40.0,
+            #     numMotors = 1
+            # )
+            # robotConfig = RobotConfig(
+            #     massKG = lbsToKilograms( SwerveDriveConstants.kWeightLbs ),
+            #     MOI = 6.893,
+            #     moduleConfig = moduleConfig,
+            #     moduleOffsets = self.__kinematics.getModules(),
+            #     trackwidthMeters = None
+            # )
+            AutoBuilder.configure(
+                pose_supplier = self.__odometry.getPose,
+                reset_pose = self.__odometry.resetPose,
+                robot_relative_speeds_supplier = self.getChassisSpeeds,
+                output = lambda speeds, feedforwards: self.runChassisSpeeds(speeds),
+                controller = PPHolonomicDriveController(
+                    PIDConstants(5.0, 0.0, 0.0),
+                    PIDConstants(5.0, 0.0, 0.0)
+                ),
+                robot_config = robotConfig,
+                should_flip_path = self.shouldFlipPath,
+                drive_subsystem = self
+            )
 
-        # #PathPlannerLogging.setLogCurrentPoseCallback( self.__field.setRobotPose )
-        # PathPlannerLogging.setLogTargetPoseCallback( self.__field.getObject('targetPose').setPose )
-        # PathPlannerLogging.setLogActivePathCallback( self.__field.getObject('path').setPoses )
+            #PathPlannerLogging.setLogCurrentPoseCallback( self.__field.setRobotPose )
+            PathPlannerLogging.setLogTargetPoseCallback( self.__field.getObject('targetPose').setPose )
+            PathPlannerLogging.setLogActivePathCallback( self.__field.getObject('path').setPoses )
+        except Exception as e:
+            print( "ERROR! SwerveDrive PathPlanner Setup" )
+            print( e )
 
     def shouldFlipPath(self) -> bool:
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed

@@ -4,7 +4,11 @@ import commands2.cmd as cmd
 from wpilib import SendableChooser, SmartDashboard
 from wpilib.shuffleboard import Shuffleboard
 
-#from pathplannerlib.auto import AutoBuilder, NamedCommands
+try:
+    from pathplannerlib.auto import AutoBuilder, NamedCommands
+except Exception as e:
+    print("ERROR: PlanPlanner Includes")
+    print( e )
 
 from commands import *
 from commands.defaults import *
@@ -93,13 +97,18 @@ class RobotContainer:
         # Special Command Handling
         sysFeeder.addBalanceCommand( cmdFeederBalance )
 
-        # PathPlanner Register Named Commands
-        # NamedCommands.registerCommand('Pickup', seqPickup )
-        # NamedCommands.registerCommand('LaunchSpeaker', seqLaunch )
+        # PathPlanner Setup
+        try:
+            # PathPlanner Register Named Commands
+            NamedCommands.registerCommand('Pickup', seqPickup )
+            NamedCommands.registerCommand('LaunchSpeaker', seqLaunch )
 
-        # Autonomous Chooser
-        # self.__autoChooser = AutoBuilder.buildAutoChooser( "None" )
-        # SmartDashboard.putData( "Auto Chooser", self.__autoChooser )
+            # Autonomous Chooser
+            self.__autoChooser = AutoBuilder.buildAutoChooser( "None" )
+            SmartDashboard.putData( "Auto Chooser", self.__autoChooser )
+        except Exception as e:
+            print( "ERROR: PathPlanner Named Commands and Chooser")
+            print( e )
 
         # Default Commands
         sysDriveTrain.setDefaultCommand( defaultSwerveDrive )
