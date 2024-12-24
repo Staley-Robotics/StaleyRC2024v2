@@ -19,6 +19,7 @@ from util.Crescendo import *
 class RobotContainer:
     # Variable Declaration
     __autoChooser:SendableChooser = None
+    __cmd:Command = cmd.none()
 
     # Initialization
     def __init__(self):
@@ -73,16 +74,21 @@ class RobotContainer:
         seqPickupPivot = PivotToPosition( sysPivot, PivotPositions.HANDOFF )
         seqPickupFeeder = FeederHandoff( sysFeeder )
         seqPickupIntakeHandoff = IntakeHandoff( sysIntake )
-        seqPickup = seqPickupIntake.andThen( seqPickupPivot ).andThen( seqPickupFeeder.alongWith( seqPickupIntakeHandoff ) )
-        seqPickup = seqPickup.onlyIf( lambda: not sysFeeder.hasSecuredNote() )
-        seqPickup = seqPickup.withName( "PickupSequence" )
+        seqPickup = seqPickupIntake \
+            .andThen( seqPickupPivot ) \
+            .andThen( seqPickupFeeder.alongWith( seqPickupIntakeHandoff ) ) \
+            .onlyIf( lambda: not sysFeeder.hasSecuredNote() ) \
+            .withName( "PickupSequence" )
 
         seqLaunchStart = LauncherStart( sysLauncher, LauncherOptions.LONG )
         seqLaunchFeeder = FeederLaunch( sysFeeder )
         seqLaunchStop = LauncherStop( sysLauncher )
-        seqLaunch = seqLaunchStart.andThen( seqLaunchFeeder ).andThen( cmd.waitSeconds( 0.25 ) ).andThen( seqLaunchStop )
-        seqLaunch = seqLaunch.onlyIf( lambda: sysFeeder.hasSecuredNote() )
-        seqLaunch = seqLaunch.withName( "LaunchSequence" )
+        seqLaunch = seqLaunchStart \
+            .andThen( seqLaunchFeeder ) \
+            .andThen( cmd.waitSeconds( 0.25 ) ) \
+            .andThen( seqLaunchStop ) \
+            .onlyIf( lambda: sysFeeder.hasSecuredNote() ) \
+            .withName( "LaunchSequence" )
 
         # Reset Gyro Command
         cmdDriveResetGyro = cmd.runOnce( lambda: sysDriveTrain.resetGyro() ).ignoringDisable(True)
