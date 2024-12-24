@@ -57,12 +57,12 @@ class Pivot(PIDSubsystem):
                 
         # Encoder
         encoderCfg = CANcoderConfiguration()
-        #encoderCfg.magnet_sensor.absolute_sensor_range = AbsoluteSensorRangeValue.SIGNED_PLUS_MINUS_HALF
         encoderCfg.magnet_sensor.absolute_sensor_discontinuity_point = 0.5
         encoderCfg.magnet_sensor.sensor_direction = SensorDirectionValue.CLOCKWISE_POSITIVE
         if not RobotBase.isSimulation(): encoderCfg.magnet_sensor.magnet_offset = PivotConstants.kOffsetRotations
         self.__encoder = CANcoder( 26, "canivore1" )
         self.__encoder.configurator.apply( encoderCfg )
+        self.__encoder.set_position( self.__encoder.get_absolute_position().value ) # Protects against accidental reboot / value changes
 
         # PID Controller
         pidController = PIDController( PivotConstants.kP, PivotConstants.kI, PivotConstants.kD )
@@ -71,7 +71,7 @@ class Pivot(PIDSubsystem):
 
         super().__init__(
             pidController,
-            self.__encoder.get_position().value
+            self.__encoder.get_absolute_position().value
         )
 
         # Enable Subsystem PIDController
@@ -95,7 +95,9 @@ class Pivot(PIDSubsystem):
         FalconLogger.logInput( "Pivot/MotorOutput", self.__motor.get_motor_voltage().value )
         FalconLogger.logInput( "Pivot/MotorPosition_r", self.__motor.get_position().value )
         FalconLogger.logInput( "Pivot/MotorVelocity_rps", self.__motor.get_velocity().value )
-        FalconLogger.logInput( "Pivot/EncoderPosition_r", self.__encoder.get_position().value )
+        
+        FalconLogger.logInput( "Pivot/EncoderPositionAbs_r", self.__encoder.get_absolute_position().value )
+        FalconLogger.logInput( "Pivot/EncoderPositionRel_r", self.__encoder.get_position().value )
         FalconLogger.logInput( "Pivot/EncoderVelocity_rps", self.__encoder.get_velocity().value )
         
         # Run
@@ -146,7 +148,7 @@ class Pivot(PIDSubsystem):
         self.__motor.set_control( self.dutyOut.with_output( output ) )
 
     def getMeasurement(self) -> float:
-        return self.__encoder.get_position().value
+        return self.__encoder.get_absolute_position().value
 
     def atSetpoint(self, position:float = None) -> bool:
         if position is None or self.getSetpoint() == degreesToRotations( position ):

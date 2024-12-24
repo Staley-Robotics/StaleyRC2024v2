@@ -88,6 +88,7 @@ class SwerveModule:
         if not RobotBase.isSimulation(): turnEncoderCfg.magnet_sensor.magnet_offset = encoderOffset
         self.__turnEncoder = CANcoder( encoderId, "canivore1" )
         self.__turnEncoder.configurator.apply( turnEncoderCfg )
+        self.__turnEncoder.set_position( self.__turnEncoder.get_absolute_position().value ) # Position Safeguard
 
         # Turn PID
         self.__turnPid = PIDController( SwerveModuleConstants.Turn.kP, SwerveModuleConstants.Turn.kI, SwerveModuleConstants.Turn.kD )
@@ -132,7 +133,8 @@ class SwerveModule:
         FalconLogger.logInput( f"{logPath}/TurnPosition_r", self.__turnMotorEncoder.getPosition() )
         FalconLogger.logInput( f"{logPath}/TurnVelocity_rpm", self.__turnMotorEncoder.getVelocity() )
 
-        FalconLogger.logInput( f"{logPath}/EncoderPosition_r", self.__turnEncoder.get_absolute_position().value )
+        FalconLogger.logInput( f"{logPath}/EncoderPositionAbs_r", self.__turnEncoder.get_absolute_position().value )
+        FalconLogger.logInput( f"{logPath}/EncoderPositionRel_r", self.__turnEncoder.get_position().value )
         FalconLogger.logInput( f"{logPath}/EncoderVelocity_rps", self.__turnEncoder.get_velocity().value )
 
         # Set Drive Motor
