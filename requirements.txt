@@ -1,11 +1,15 @@
 ### RoboRio Installers
-robotpy-installer==2025.0.0b3
+robotpy-installer==2025.0.0
 
 ### RobotPy
-robotpy==2025.0.0b2
-robotpy[commands2]==2025.0.0b2
-robotpy-rev==2025.0.0b1.post1
-phoenix6==25.0.0b4
-robotpy-pathplannerlib==2025.0.0b5
+robotpy==2025.1.1.1
+robotpy[commands2]
+robotpy[rev]
+robotpy[phoenix6]
+robotpy[pathplannerlib]
+# robotpy[commands2]==2025.0.0b3
+# robotpy-rev==2025.0.0b1.post1
+# phoenix6==25.0.0b4
+# robotpy-pathplannerlib==2025.0.0b5
 
 ## Other

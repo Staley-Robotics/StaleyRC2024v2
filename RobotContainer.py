@@ -2,7 +2,7 @@ from wpilib import SendableChooser, SmartDashboard
 
 from wpimath.units import degreesToRotations
 
-# from pathplannerlib.auto import AutoBuilder
+from pathplannerlib.auto import AutoBuilder
 
 from commands2 import Command
 from commands2.button import CommandXboxController
@@ -37,8 +37,8 @@ class RobotContainer:
 
 
         ## Autonomous Chooser
-        self.m_autoChooser = SendableChooser()#AutoBuilder.buildAutoChooser()
-        # self.m_autoChooser.setDefaultOption( "1 - None", cmd.none() )
+        self.m_autoChooser = AutoBuilder.buildAutoChooser()
+        self.m_autoChooser.setDefaultOption( "1 - None", cmd.none() )
         SmartDashboard.putData( "Autonomous Mode", self.m_autoChooser )
 
         ## Default Commands

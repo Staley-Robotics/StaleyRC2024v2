@@ -62,20 +62,12 @@ class SwerveModule:
         # edit PID vals thru Sendable -> change here in code for persistance
         self.drivePID = PIDController(0.0, 0.0, 0.0)
         self.turnPID = PIDController(4.3,0.0,0.0)
-        # self.turnPID = ProfiledPIDController(
-        #     0.0, 0.0, 0.0,
-        #     TrapezoidProfile.Constraints(
-        #         self.kMaxVelocity,
-        #         self.kMaxAcceleration
-        #     )
-        # )
         self.turnPID.enableContinuousInput(-pi,pi)
 
         self.driveFF = SimpleMotorFeedforwardMeters(0.0, 2.8235)
-        # self.turnFF = SimpleMotorFeedforwardMeters(0, 0.0)
 
-        SmartDashboard.putData(f"{ssName}drivePID", self.drivePID)
-        SmartDashboard.putData(f"{ssName}turnPID", self.turnPID)
+        # SmartDashboard.putData(f"{ssName}drivePID", self.drivePID)
+        # SmartDashboard.putData(f"{ssName}turnPID", self.turnPID)
 
     ##Logging funcs
     def getDriveVelocity(self) -> float:
@@ -106,24 +98,23 @@ class SwerveModule:
         state = desiredState
         state.optimize(encoderRotation)
 
-        #make it drive slow when it has to turn a lot
-        # SmartDashboard.putNumber("set velocity pre cos", state.speed)
+        #smooth angle change
         state.speed *= (state.angle - encoderRotation).cos()
+        #log setpoint
         SmartDashboard.putNumber(f"SwerveModule-{self.ssName} set velocity", state.speed)
         SmartDashboard.putNumber(f"SwerveModule-{self.ssName} set angle", state.angle.radians())
 
+        #do pid calc
         driveOutput = self.drivePID.calculate(
             self.drive_motor_encoder.getVelocity(), state.speed
         )
         driveFeedForward = self.driveFF.calculate(state.speed)
 
-        #YAY PID
         turnOutput = self.turnPID.calculate(
             self.getAbsoluteEncoderPosition(), state.angle.radians()
         )
-        # turnFeedForward = self.turnFF.calculate(self.turnPID.getSetpoint().velocity)
 
         self.drive_motor.setVoltage(driveOutput + driveFeedForward)
-        self.turn_motor.setVoltage(turnOutput)# + turnFeedForward)
+        self.turn_motor.setVoltage(turnOutput)
 
         
